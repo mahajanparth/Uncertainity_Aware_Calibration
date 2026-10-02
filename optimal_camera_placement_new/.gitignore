@@ -29,3 +29,6 @@ results/**/*.bag
 results/**/*.npz
 results/kalibr_*/*/cam0/
 isaac_sim_scripts/generated_assets/*.log
+
+# Pose-graph benchmark datasets (kept locally, not versioned)
+*.g2o
