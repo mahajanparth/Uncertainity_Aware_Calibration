@@ -4,16 +4,8 @@ from scipy.optimize import linprog, minimize_scalar
 import gtsam
 import scipy
 from enum import Enum
-from enum import Enum
-
-from sympy.polys.benchmarks.bench_solvers import time_eqs_10x8
-
-import utilities
-import FIM as infmat
-import numpy as np
 import matplotlib.pyplot as plt
 from functools import partial
-from typing import List, Optional
 from gtsam.utils import plot
 # from Experiments import exp_utils
 from scipy.optimize import minimize, Bounds, LinearConstraint
@@ -24,7 +16,15 @@ from joblib import Parallel, delayed
 import scipy.sparse as sp
 from functools import partial
 import time
-from gurobipy import Model, GRB, quicksum
+try:
+    from gurobipy import Model, GRB, quicksum
+except ImportError:  # pragma: no cover - optional dependency
+    Model = None
+    GRB = None
+    quicksum = None
+
+from . import utilities
+from . import FIM as infmat
 
 L = gtsam.symbol_shorthand.L
 X = gtsam.symbol_shorthand.X
@@ -130,36 +130,374 @@ def compute_schur_complement(x, inf_mats, H0, num_poses):
     Hlx = combined_fim[:measurement_dim, measurement_dim:].tocsc()
     Hxx = combined_fim[measurement_dim:, measurement_dim:].tocsc()
 
-    # Compute Schur complement
-    #s= time.time()
     try:
-        # T2 = spsolve(Hll.tocsc(), Hlx.tocsc())
         Hll_inv = scipy.sparse.linalg.inv(Hll.tocsc())
         T2 = Hll_inv.dot(Hlx)
         T1 = Hlx.transpose().dot(Hll_inv)
     except Exception as e:
         print("Linear solver failed:", e)
-        T2= Hll.inverse().dot(Hlx).toarray()
+        T2 = Hll.inverse().dot(Hlx).toarray()
 
     H_schur = Hxx - Hlx.transpose().dot(T2)
-    # e= time.time()
-    # execution_time = e - s
-    # print(f"execution time sparse schur: {execution_time:.4f} seconds")
 
-    # Compute smallest eigenvalue and eigenvector
     try:
-        _, min_eig_vec = eigsh(H_schur, k=1, which='SA')
+        min_eig_vals, min_eig_vec = eigsh(H_schur, k=1, which='SA')
+        min_eig_val = float(min_eig_vals[0])
     except Exception as e:
         print("Eigenvalue solver failed:", e)
-        min_eig_vec = np.zeros(H_schur.shape[1])
+        min_eig_val = 0.0
+        min_eig_vec = np.zeros((H_schur.shape[1], 1))
 
-    return H_schur, min_eig_vec, T1, T2, measurement_dim
+    return H_schur, min_eig_val, min_eig_vec, T1, T2, measurement_dim
 
 def compute_combined_fim(x, inf_mats, H0):
     combined_fim = H0.copy()
     for xi, Hi in zip(x, inf_mats):
         combined_fim += xi * Hi
     return combined_fim    
+
+def compute_calibration_schur_sparse(x, inf_mats, H0, num_poses):
+    """Calibration Schur complement: marginalizes the block-diagonal pose block,
+    leaving a small (intrinsics_dim × intrinsics_dim) H_cal matrix.
+
+    H_cal = H_tt - H_tn @ inv(H_nn) @ H_nt
+
+    H_nn is block diagonal (one 6×6 block per pose), so its inverse is computed
+    by inverting each 6×6 block independently — no large matrix inversion needed.
+    """
+    pose_dim = 6
+    combined_fim = H0.copy()
+    for xi, Hi in zip(x, inf_mats):
+        combined_fim += xi * Hi
+    combined_fim = combined_fim.tocsc()
+
+    intr_dim = combined_fim.shape[0] - num_poses * pose_dim
+
+    H_tt = np.asarray(combined_fim[:intr_dim, :intr_dim].todense())        # (intr_dim × intr_dim)
+    H_tn = np.asarray(combined_fim[:intr_dim, intr_dim:].todense())        # (intr_dim × num_poses*6)
+    H_nn = combined_fim[intr_dim:, intr_dim:]                              # (num_poses*6 × num_poses*6)
+
+    # Invert H_nn block by block: each pose contributes an independent 6×6 block
+    reg = 1e-9 * np.eye(pose_dim)
+    T2_cal = np.zeros((num_poses * pose_dim, intr_dim), dtype=float)       # H_nn_inv @ H_nt
+    for i in range(num_poses):
+        s, e = i * pose_dim, (i + 1) * pose_dim
+        block = np.asarray(H_nn[s:e, s:e].todense())
+        block_inv = np.linalg.pinv(block + reg)
+        T2_cal[s:e, :] = block_inv @ H_tn[:, s:e].T                       # (6×9)
+
+    T1_cal = T2_cal.T                                                       # (intr_dim × num_poses*6)
+    H_cal = H_tt - H_tn @ T2_cal                                           # (intr_dim × intr_dim)
+    H_cal = 0.5 * (H_cal + H_cal.T)
+
+    eigvals, eigvecs = np.linalg.eigh(H_cal)
+    min_eig_val = float(eigvals[0])
+    min_eig_vec = eigvecs[:, 0:1]
+
+    return H_cal, min_eig_val, min_eig_vec, T1_cal, T2_cal, intr_dim
+
+
+def compute_grad_calibration_parallel(idx, Hi, T1_cal, T2_cal, min_eig_vec, intr_dim, pose_dim):
+    """Gradient of lambda_min(H_cal) w.r.t. selection weight x_i.
+
+    d H_cal / dx_i = h_tt_i - h_tn_i @ T2_cal - T1_cal @ h_nt_i + T1_cal @ h_nn_i @ T2_cal
+
+    Only the slices of T1_cal/T2_cal for pose i's columns/rows are needed,
+    keeping all operations small.
+    """
+    Hi_csc = Hi.tocsc()
+    h_tt_i = np.asarray(Hi_csc[:intr_dim, :intr_dim].todense())            # (intr_dim × intr_dim)
+    s, e = intr_dim + idx * pose_dim, intr_dim + (idx + 1) * pose_dim
+    h_tn_i = np.asarray(Hi_csc[:intr_dim, s:e].todense())                  # (intr_dim × 6)
+    h_nn_i = np.asarray(Hi_csc[s:e, s:e].todense())                        # (6 × 6)
+
+    T1_slice = T1_cal[:, idx * pose_dim:(idx + 1) * pose_dim]              # (intr_dim × 6)
+    T2_slice = T2_cal[idx * pose_dim:(idx + 1) * pose_dim, :]              # (6 × intr_dim)
+
+    grad_cal = h_tt_i - h_tn_i @ T2_slice - T1_slice @ h_tn_i.T + T1_slice @ h_nn_i @ T2_slice
+    v = min_eig_vec.flatten()
+    return idx, -float(v @ grad_cal @ v)
+
+
+def precompute_fim_blocks(inf_mats, H0, num_poses, intr_dim):
+    """Extract small dense blocks from all sparse FIMs once before the FW loop.
+
+    Returns pre-stacked numpy arrays so each FW iteration only touches small dense matrices.
+    """
+    pose_dim = 6
+    H0_csc = H0.tocsc()
+
+    H0_tt = np.asarray(H0_csc[:intr_dim, :intr_dim].todense())  # (intr_dim, intr_dim)
+    # H0_tn as (N, intr_dim, pose_dim) — one (9,6) block per pose
+    H0_tn_raw = np.asarray(H0_csc[:intr_dim, intr_dim:].todense())  # (intr_dim, N*6)
+    H0_tn_blocks = H0_tn_raw.reshape(intr_dim, num_poses, pose_dim).transpose(1, 0, 2)  # (N, intr_dim, 6)
+    H0_nn_blocks = np.stack([
+        np.asarray(H0_csc[
+            intr_dim + i * pose_dim: intr_dim + (i + 1) * pose_dim,
+            intr_dim + i * pose_dim: intr_dim + (i + 1) * pose_dim,
+        ].todense())
+        for i in range(num_poses)
+    ])  # (N, 6, 6)
+
+    all_h_tt = np.zeros((num_poses, intr_dim, intr_dim), dtype=float)
+    all_h_tn = np.zeros((num_poses, intr_dim, pose_dim), dtype=float)
+    all_h_nn = np.zeros((num_poses, pose_dim, pose_dim), dtype=float)
+    for i, Hi in enumerate(inf_mats):
+        Hi_csc = Hi.tocsc()
+        all_h_tt[i] = np.asarray(Hi_csc[:intr_dim, :intr_dim].todense())
+        s, e = intr_dim + i * pose_dim, intr_dim + (i + 1) * pose_dim
+        all_h_tn[i] = np.asarray(Hi_csc[:intr_dim, s:e].todense())
+        all_h_nn[i] = np.asarray(Hi_csc[s:e, s:e].todense())
+
+    return H0_tt, H0_tn_blocks, H0_nn_blocks, all_h_tt, all_h_tn, all_h_nn
+
+
+def compute_calibration_schur_vectorized(x, H0_tt, H0_tn_blocks, H0_nn_blocks, all_h_tt, all_h_tn, all_h_nn):
+    """Vectorized calibration Schur complement — no sparse ops, no Python loops.
+
+    H_cal = H_tt - sum_i H_tn_i @ H_nn_i^{-1} @ H_nt_i
+    All blocks are pre-extracted dense arrays; this runs entirely in numpy.
+    """
+    pose_dim = 6
+
+    # H_tt: (intr_dim, intr_dim)
+    H_tt = H0_tt + np.einsum('n,njk->jk', x, all_h_tt)
+
+    # H_tn_blocks: (N, intr_dim, 6)
+    H_tn_blocks = H0_tn_blocks + all_h_tn * x[:, None, None]
+
+    # H_nn_blocks: (N, 6, 6)
+    H_nn_blocks = H0_nn_blocks + all_h_nn * x[:, None, None]
+
+    # Invert each 6×6 block: (N, 6, 6)
+    reg = 1e-9 * np.eye(pose_dim)[None, :, :]
+    H_nn_inv = np.linalg.pinv(H_nn_blocks + reg)  # batch pinv
+
+    # T2_blocks[i] = H_nn_inv[i] @ H_tn_blocks[i].T : (N, 6, intr_dim)
+    T2_blocks = np.einsum('nij,nkj->nik', H_nn_inv, H_tn_blocks)
+
+    # Schur correction: sum_i H_tn_i @ T2_i → (intr_dim, intr_dim)
+    schur_contrib = np.einsum('nij,njk->ik', H_tn_blocks, T2_blocks)
+
+    H_cal = H_tt - schur_contrib
+    H_cal = 0.5 * (H_cal + H_cal.T)
+
+    eigvals, eigvecs = np.linalg.eigh(H_cal)
+    return H_cal, float(eigvals[0]), eigvecs[:, 0:1], T2_blocks, H_tn_blocks
+
+
+def compute_grad_vectorized(v, all_h_tt, all_h_tn, all_h_nn, T2_blocks, H_tn_blocks):
+    """Vectorized gradient of lambda_min(H_cal) w.r.t. selection x.
+
+    grad[i] = -v.T @ (d H_cal/dx_i) @ v
+            = -(t1 - 2*t2 + t4)
+    No Python loops, no joblib — pure numpy einsum.
+    """
+    v = v.flatten()
+
+    # t1 = v.T @ h_tt_i @ v  for each i
+    t1 = np.einsum('j,njk,k->n', v, all_h_tt, v)
+
+    # t2 = v.T @ h_tn_i @ T2_blocks[i] @ v  (symmetric with t3)
+    vh_tn = np.einsum('j,njk->nk', v, all_h_tn)       # (N, 6)
+    T2v = np.einsum('njk,k->nj', T2_blocks, v)         # (N, 6)
+    t2 = np.einsum('nk,nk->n', vh_tn, T2v)             # (N,)
+
+    # t4 = T2v[i].T @ h_nn_i @ T2v[i]
+    t4 = np.einsum('nj,njk,nk->n', T2v, all_h_nn, T2v)  # (N,)
+
+    return -(t1 - 2.0 * t2 + t4)
+
+
+def compute_grad_a_optimal_vectorized(H_cal, all_h_tt, all_h_tn, all_h_nn, T2_blocks):
+    """Vectorized gradient of -trace(H_cal^{-1}) w.r.t. selection x.
+
+    For A-optimality, the objective is f(u) = -trace(H_cal^{-1}(u)).
+    Gradient: grad_i = -trace(H_cal^{-2} @ G_i)  where G_i = d H_cal / d u_i.
+
+    Same structure as compute_grad_vectorized but replaces v⊗v with H_cal^{-2}.
+    grad[i] = -(t1 - 2*t2 + t4)  with P2 = H_cal^{-1} @ H_cal^{-1} replacing v*v^T.
+    """
+    reg = 1e-12 * np.eye(H_cal.shape[0])
+    P = np.linalg.pinv(H_cal + reg)   # H_cal^{-1},  (d, d)
+    P2 = P @ P                         # H_cal^{-2},  (d, d)
+
+    # t1[i] = trace(P2 @ h_tt_i) = einsum('jk,njk->n', P2, all_h_tt)
+    t1 = np.einsum('jk,njk->n', P2, all_h_tt)
+
+    # t2[i] = trace(P2 @ h_tn_i @ T2_i)
+    #       = trace(T2_i @ P2 @ h_tn_i)  [cyclic]
+    #       = einsum('nkj,jl,nlk->n', T2_blocks, P2, all_h_tn)
+    T2P2 = np.einsum('nkj,jl->nkl', T2_blocks, P2)           # (N, 6, d)
+    t2 = np.einsum('nkl,nlk->n', T2P2, all_h_tn)              # (N,)
+
+    # t4[i] = trace(P2 @ T2_i.T @ h_nn_i @ T2_i)
+    #       = trace((T2_i @ P2 @ T2_i.T) @ h_nn_i)  [cyclic]
+    T2P2T2T = np.einsum('nkl,njl->nkj', T2P2, T2_blocks)     # (N, 6, 6) = T2@P2@T2^T
+    t4 = np.einsum('nkj,nkj->n', T2P2T2T, all_h_nn)          # (N,)
+
+    return -(t1 - 2.0 * t2 + t4)
+
+
+def compute_grad_d_optimal_vectorized(H_cal, all_h_tt, all_h_tn, all_h_nn, T2_blocks):
+    """Vectorized gradient of log det(H_cal) w.r.t. selection x.
+
+    For D-optimality, the objective is f(u) = log det(H_cal(u)).
+    Gradient: grad_i = trace(H_cal^{-1} @ G_i)  where G_i = d H_cal / d u_i.
+
+    Same structure as compute_grad_a_optimal_vectorized but using P = H_cal^{-1}
+    instead of P^2 = H_cal^{-2}.  Returns the *negative* gradient (convention: LMO
+    picks most-negative entries to maximise the objective).
+    """
+    reg = 1e-12 * np.eye(H_cal.shape[0])
+    P = np.linalg.pinv(H_cal + reg)   # H_cal^{-1},  (d, d)
+
+    # t1[i] = trace(P @ h_tt_i)
+    t1 = np.einsum('jk,njk->n', P, all_h_tt)
+
+    # t2[i] = trace(P @ h_tn_i @ T2_i) = trace(T2_i @ P @ h_tn_i)  [cyclic]
+    T2P = np.einsum('nkj,jl->nkl', T2_blocks, P)             # (N, 6, d)
+    t2 = np.einsum('nkl,nlk->n', T2P, all_h_tn)               # (N,)
+
+    # t4[i] = trace(P @ T2_i.T @ h_nn_i @ T2_i)
+    #       = trace((T2_i @ P @ T2_i.T) @ h_nn_i)  [cyclic]
+    T2PT2T = np.einsum('nkl,njl->nkj', T2P, T2_blocks)       # (N, 6, 6) = T2@P@T2^T
+    t4 = np.einsum('nkj,nkj->n', T2PT2T, all_h_nn)            # (N,)
+
+    return -(t1 - 2.0 * t2 + t4)
+
+
+def frank_wolfe_optimization_d_optimal(
+    inf_mats: List[csr_matrix],
+    H0: csr_matrix,
+    selection_init: np.ndarray,
+    num_poses: int,
+    A: np.ndarray,
+    b: np.ndarray,
+) -> Tuple[np.ndarray, float, int]:
+    """Frank-Wolfe continuous relaxation of the D-optimal calibration design problem.
+
+    Maximises f(u) = log det(H_cal(u))  subject to sum(u) <= K, u in [0,1]^N.
+    Uses the same vectorised Schur machinery as FW-E / FW-A but with the D-optimal gradient.
+    """
+    H0 = H0.tocsc()
+    inf_mats = [Hi.tocsc() for Hi in inf_mats]
+    A = sp.csc_matrix(A)
+    pose_dim = 6
+    intr_dim = H0.shape[0] - num_poses * pose_dim
+
+    print(f"[FW-D] Pre-extracting dense blocks (intr_dim={intr_dim}, num_poses={num_poses})...", flush=True)
+    H0_tt, H0_tn_blocks, H0_nn_blocks, all_h_tt, all_h_tn, all_h_nn = \
+        precompute_fim_blocks(inf_mats, H0, num_poses, intr_dim)
+    print(f"[FW-D] Block extraction done. Starting iterations...", flush=True)
+
+    selection_cur = selection_init.copy().astype(float)
+    prev_obj = -np.inf
+    d_obj = prev_obj
+    fw_gap_final = float("inf")
+
+    for iteration in range(300):
+        try:
+            H_cal, _, _, T2_blocks, _ = compute_calibration_schur_vectorized(
+                selection_cur, H0_tt, H0_tn_blocks, H0_nn_blocks, all_h_tt, all_h_tn, all_h_nn
+            )
+        except Exception as e:
+            print(f"[FW-D] Schur error at iter {iteration}: {e}")
+            break
+
+        reg = 1e-12 * np.eye(H_cal.shape[0])
+        sign, logabsdet = np.linalg.slogdet(H_cal + reg)
+        d_obj = float(logabsdet) if sign > 0 else -np.inf
+
+        rel_change = abs(d_obj - prev_obj) / max(abs(prev_obj), 1.0)
+        prev_obj = d_obj
+
+        print(f"[FW-D] iter={iteration:3d}  logdet={d_obj:.6e}", flush=True)
+
+        grad = compute_grad_d_optimal_vectorized(H_cal, all_h_tt, all_h_tn, all_h_nn, T2_blocks)
+
+        s = solve_lmo(grad, A, b)
+        if s is None:
+            break
+
+        fw_gap_final = float(grad @ (selection_cur - s))
+
+        if rel_change < 1e-4 and fw_gap_final < 1e-4:
+            print(f"[FW-D] Converged at iter {iteration}  logdet={d_obj:.6e}  gap={fw_gap_final:.2e}")
+            break
+
+        alpha = 2.0 / (iteration + 2)
+        selection_cur = selection_cur + alpha * (s - selection_cur)
+        selection_cur = np.clip(selection_cur, 0.0, 1.0)
+
+    return selection_cur, d_obj, iteration + 1, fw_gap_final
+
+
+def frank_wolfe_optimization_a_optimal(
+    inf_mats: List[csr_matrix],
+    H0: csr_matrix,
+    selection_init: np.ndarray,
+    num_poses: int,
+    A: np.ndarray,
+    b: np.ndarray,
+) -> Tuple[np.ndarray, float, int]:
+    """Frank-Wolfe continuous relaxation of the A-optimal calibration design problem.
+
+    Maximises f(u) = -trace(H_cal^{-1}(u))  subject to sum(u) <= K, u in [0,1]^N.
+    Uses the same vectorised Schur machinery as FW-E but with the A-optimal gradient.
+    """
+    H0 = H0.tocsc()
+    inf_mats = [Hi.tocsc() for Hi in inf_mats]
+    A = sp.csc_matrix(A)
+    pose_dim = 6
+    intr_dim = H0.shape[0] - num_poses * pose_dim
+
+    print(f"[FW-A] Pre-extracting dense blocks (intr_dim={intr_dim}, num_poses={num_poses})...", flush=True)
+    H0_tt, H0_tn_blocks, H0_nn_blocks, all_h_tt, all_h_tn, all_h_nn = \
+        precompute_fim_blocks(inf_mats, H0, num_poses, intr_dim)
+    print(f"[FW-A] Block extraction done. Starting iterations...", flush=True)
+
+    selection_cur = selection_init.copy().astype(float)
+    prev_obj = np.inf
+    a_obj = prev_obj
+    fw_gap_final = float("inf")
+
+    for iteration in range(300):
+        try:
+            H_cal, _, _, T2_blocks, _ = compute_calibration_schur_vectorized(
+                selection_cur, H0_tt, H0_tn_blocks, H0_nn_blocks, all_h_tt, all_h_tn, all_h_nn
+            )
+        except Exception as e:
+            print(f"[FW-A] Schur error at iter {iteration}: {e}")
+            break
+
+        reg = 1e-12 * np.eye(H_cal.shape[0])
+        P = np.linalg.pinv(H_cal + reg)
+        a_obj = -float(np.trace(P))   # f(u) = -trace(H_cal^{-1}), negative = worse
+
+        rel_change = abs(a_obj - prev_obj) / max(abs(prev_obj), 1.0)
+        prev_obj = a_obj
+
+        print(f"[FW-A] iter={iteration:3d}  -trace(H^{{-1}})={a_obj:.6e}", flush=True)
+
+        grad = compute_grad_a_optimal_vectorized(H_cal, all_h_tt, all_h_tn, all_h_nn, T2_blocks)
+
+        s = solve_lmo(grad, A, b)
+        if s is None:
+            break
+
+        fw_gap_final = float(grad @ (selection_cur - s))
+
+        if rel_change < 1e-4 and fw_gap_final < 1e-4:
+            print(f"[FW-A] Converged at iter {iteration}  -trace(H^{{-1}})={a_obj:.6e}  gap={fw_gap_final:.2e}")
+            break
+
+        alpha = 2.0 / (iteration + 2)
+        selection_cur = selection_cur + alpha * (s - selection_cur)
+        selection_cur = np.clip(selection_cur, 0.0, 1.0)
+
+    return selection_cur, a_obj, iteration + 1, fw_gap_final
+
 
 def greedy_selection(
     inf_mats: List[np.ndarray],
@@ -263,30 +601,17 @@ def greedy_selection(
 
 
 def solve_lmo(grad, A, b):
+    """Closed-form LMO for the box + budget constraint: sum(x) <= K, x in [0,1]^N.
+
+    The optimal solution is the K-sparse indicator of the K indices with the
+    most negative gradient.  This is O(N log K) vs O(N^3) for linprog and is
+    numerically stable regardless of gradient magnitude.
     """
-    Solves the Linear Minimization Oracle (LMO) problem for Frank-Wolfe optimization.
-
-    Args:
-        grad (np.ndarray): Gradient vector (objective coefficients for the linear program).
-        A (np.ndarray or scipy.sparse.csr_matrix): Inequality constraint matrix.
-        b (np.ndarray): Inequality constraint bounds.
-
-    Returns:
-        np.ndarray or None: Solution vector if the optimization succeeds; otherwise, None.
-    """
-    num_sensors = len(grad)
-
-    # Define bounds for all variables between 0 and 1
-    bounds = [(0, 1) for _ in range(num_sensors)]
-
-    # Use `linprog` from scipy to solve the LMO
-    res = linprog(c=grad, A_ub=A, b_ub=b, bounds=bounds, method='highs')
-
-    if res.success:
-        return res.x
-    else:
-        print(f"LMO failed: {res.message}")
-        return None
+    K = int(round(float(b[0])))
+    s = np.zeros(len(grad), dtype=float)
+    top_k = np.argpartition(grad, K)[:K]
+    s[top_k] = 1.0
+    return s
 
 
 def frank_wolfe_optimization(
@@ -316,84 +641,53 @@ def frank_wolfe_optimization(
 
     H0 = H0.tocsc()
     inf_mats = [Hi.tocsc() for Hi in inf_mats]
-    
-    # Convert A to CSC format
     A = sp.csc_matrix(A)
-    # Initialize selection vector as a continuous variable (float)
+    pose_dim = 6
+    intr_dim = H0.shape[0] - num_poses * pose_dim
+
+    print(f"[FW] Pre-extracting dense blocks (intr_dim={intr_dim}, num_poses={num_poses})...", flush=True)
+    H0_tt, H0_tn_blocks, H0_nn_blocks, all_h_tt, all_h_tn, all_h_nn = \
+        precompute_fim_blocks(inf_mats, H0, num_poses, intr_dim)
+    print(f"[FW] Block extraction done. Starting iterations...", flush=True)
+
     selection_cur = selection_init.copy().astype(float)
-    prev_min_eig = -np.inf  # Initialize to negative infinity for maximization
-    
-    for iteration in range(1000):
-        # Combine the Fisher Information Matrices based on current selection
-        combined_fim = H0.copy().tocsc()
-        for idx, sel in enumerate(selection_cur):
-            combined_fim += sel * inf_mats[idx]
-        
-        # Compute the Schur complement and minimum eigenvalue
+    prev_min_eig = -np.inf
+    min_eig_val = prev_min_eig
+    fw_gap_final = float("inf")
+
+    for iteration in range(300):
         try:
-            pose_dim = 6  # Adjust if different
-            num_pose_elements = num_poses * pose_dim
-            total_size = combined_fim.shape[0]
-            measurement_dim = total_size - num_pose_elements
-
-            Hll = combined_fim[:measurement_dim, :measurement_dim].tocsc()
-            Hlx = combined_fim[:measurement_dim, measurement_dim:].tocsc()
-            Hxx = combined_fim[measurement_dim:, measurement_dim:].tocsc()
-
-            # Solve Hll * X = Hlx
-            X = spsolve(Hll, Hlx).toarray()
-
-            # Compute Schur complement
-            H_schur = Hxx - Hlx.transpose().dot(X)
-
-            # Ensure symmetry
-            H_schur = (H_schur + H_schur.T) / 2
-
-            # Compute the smallest eigenvalue and corresponding eigenvector
-            min_eig_val, min_eig_vec = eigsh(H_schur, k=1, which='SA')
-            min_eig_val = min_eig_val[0]
-            min_eig_vec = min_eig_vec[:, 0]
+            _, min_eig_val, min_eig_vec, T2_blocks, H_tn_blocks = \
+                compute_calibration_schur_vectorized(
+                    selection_cur, H0_tt, H0_tn_blocks, H0_nn_blocks, all_h_tt, all_h_tn, all_h_nn
+                )
         except Exception as e:
-            print(f"Error during Schur complement or eigenvalue computation at iteration {iteration}: {e}")
+            print(f"Error during Schur complement computation at iteration {iteration}: {e}")
             break
 
-        # Check for convergence
-        if abs(min_eig_val - prev_min_eig) < 1e-4:
-            print(f"Converged at iteration {iteration}")
-            break
+        rel_change = abs(min_eig_val - prev_min_eig) / max(abs(prev_min_eig), 1.0)
         prev_min_eig = min_eig_val
 
-        # Compute gradient
-        try:
-            H_schur, min_eig_vec, T1, T2, measurement_dim = compute_schur_complement(selection_cur, inf_mats, H0, num_poses)
+        print(f"[FW] iter={iteration:3d}  min_eig={min_eig_val:.6e}", flush=True)
 
-            # Parallelized gradient computation
-            results = Parallel(n_jobs=-1)(
-                delayed(compute_grad_parallel)(idx, Hi, T1, T2, min_eig_vec, measurement_dim)
-                for idx, Hi in enumerate(inf_mats)
-            )
+        grad = compute_grad_vectorized(min_eig_vec, all_h_tt, all_h_tn, all_h_nn, T2_blocks, H_tn_blocks)
 
-            grad = np.zeros_like(selection_cur)
-            for idx, grad_value in results:
-                grad[idx] = grad_value
-        except Exception as e:
-            print(f"Error during gradient computation at iteration {iteration}: {e}")
-            break
-
-        # Solve the Linear Minimization Oracle (LMO)
         s = solve_lmo(grad, A, b)
         if s is None:
             print(f"LMO failed to find a feasible solution at iteration {iteration}.")
             break
 
-        # Update step size (classic Frank-Wolfe step size: 2/(t+2))
-        alpha = 2 / (iteration + 2)
+        fw_gap_final = float(grad @ (selection_cur - s))
 
-        # Update the selection vector
+        if rel_change < 1e-4 and fw_gap_final < 1e-4:
+            print(f"[FW] Converged at iteration {iteration}  min_eig={min_eig_val:.6e}  gap={fw_gap_final:.2e}")
+            break
+
+        alpha = 2 / (iteration + 2)
         selection_cur = selection_cur + alpha * (s - selection_cur)
         selection_cur = np.clip(selection_cur, 0, 1)
 
-    return selection_cur, min_eig_val, iteration + 1
+    return selection_cur, min_eig_val, iteration + 1, fw_gap_final
 
 
 def roundsolution(selection, k):
@@ -562,7 +856,6 @@ def compute_grad_parallel(idx, Hi, T1, T2, min_eig_vec, measurement_dim):
     Args:
         idx (int): Index of the matrix.
         Hi (scipy.sparse.csr_matrix): Information matrix.
-        Hll (scipy.sparse.csc_matrix): Submatrix from combined FIM.
         T1 (np.ndarray): Dense intermediate matrix from Schur computation - Hxl * inv(Hll)
         T2 (np.ndarray): intermediate matrix from Schur computation -  inv(Hll) * Hlx
         min_eig_vec (np.ndarray): Smallest eigenvector of Schur complement.
@@ -607,15 +900,8 @@ def min_eig_obj(x, inf_mats, H0, num_poses):
     Returns:
         float: Objective function value.
     """
-    H_schur, _, _, _ = compute_schur_complement(x, inf_mats, H0, num_poses)
-    # Compute smallest eigenvalue
-    try:
-        min_eig_val, _ = eigsh(H_schur, k=1, which='SA')
-    except Exception as e:
-        print("Eigenvalue solver failed:", e)
-        min_eig_val = [0.0]
-
-    return -min_eig_val[0]
+    _, min_eig_val, _, _, _, _ = compute_schur_complement(x, inf_mats, H0, num_poses)
+    return -min_eig_val
 
 def min_eig_grad(x, inf_mats, H0, num_poses):
     """
@@ -631,7 +917,7 @@ def min_eig_grad(x, inf_mats, H0, num_poses):
         np.ndarray: Gradient vector.
     """
     start_time = time.time()
-    H_schur, min_eig_vec, T1, T2, measurement_dim = compute_schur_complement(x, inf_mats, H0, num_poses)
+    _, _, min_eig_vec, T1, T2, measurement_dim = compute_schur_complement(x, inf_mats, H0, num_poses)
 
     # Parallelized gradient computation
     results = Parallel(n_jobs=-1)(
@@ -657,7 +943,6 @@ def scipy_minimize(inf_mats, H0, selection_init, num_poses, A, b):
         inf_mats (List[np.ndarray]): List of information matrices for each candidate sensor configuration.
         H0 (np.ndarray): Prior information matrix.
         selection_init (np.ndarray): Initial continuous selection vector.
-        k (int): Exact number of sensors to select.
         num_poses (int): Number of poses in the problem.
         A (np.ndarray): Matrix defining inequality constraints.
         b (np.ndarray): Vector defining inequality constraints.
@@ -682,12 +967,17 @@ def scipy_minimize(inf_mats, H0, selection_init, num_poses, A, b):
         x0=selection_init,  # Initial guess for the optimization variables
         method='SLSQP',  # Use Sequential Least Squares Quadratic Programming
         jac=grad_fun,
-        constraints=[linear_constraint], 
+        constraints=[linear_constraint],
         bounds=bounds,  # Provide bounds
         options={'disp': True, 'maxiter': 10000, 'ftol': 1e-4} )
 
+    # Derive intrinsics_dim the same way compute_schur_complement_d does:
+    # the FIM is laid out as [intrinsics | poses], so intrinsics_dim = total - num_poses * 6.
+    pose_dim = 6
+    intrinsics_dim = H0.shape[0] - num_poses * pose_dim
+
     # Get the minimum eigenvalue of the continuous solution
-    min_eig_val_unr, _, _ = infmat.find_min_eig_pair(inf_mats, res.x, H0, num_poses)
+    min_eig_val_unr, _, _ = infmat.find_min_eig_pair(inf_mats, res.x, H0, intrinsics_dim)
 
     return res.x, min_eig_val_unr
 
