@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Sequence
+from typing import Any, Dict, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1259,6 +1259,73 @@ def plot_eigenvalues_vs_scalar(
     ax.set_ylabel("eigenvalue after calibration")
     ax.grid(alpha=0.2, linewidth=0.6)
     ax.legend(loc="best")
+    fig.tight_layout()
+
+    if save_path:
+        path = Path(save_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(path, dpi=200, bbox_inches="tight")
+    return fig
+
+
+
+def plot_benchmark_comparison(
+    results: Dict[str, Dict[str, Any]],
+    save_path: str | None = None,
+) -> plt.Figure:
+    """Grouped bar chart comparing all selection methods across key metrics.
+
+    Args:
+        results: {method_name: {metric: value, metric_std: value, ...}}
+                 Metrics expected: min_eig, trace_cov, logdet, param_error,
+                                   train_rms, heldout_rms, time_s
+    """
+    methods = list(results.keys())
+    n = len(methods)
+    colors = [
+        "#64748b", "#06b6d4", "#8b5cf6", "#f59e0b",
+        "#10b981", "#ef4444", "#3b82f6",
+    ][:n]
+
+    # Metrics to display and their display names / direction
+    panels = [
+        ("min_eig_norm",  "min-eig (normalised ↑)",  True),
+        ("param_error",   "param error ‖θ̂−θ‖ (↓)",  False),
+        ("heldout_rms",   "held-out RMS px (↓)",      False),
+        ("time_s",        "wall-clock (s) (↓)",        False),
+    ]
+
+    # Normalise min_eig by the random baseline
+    rand_min_eig = results.get("random", {}).get("min_eig", 1.0) or 1.0
+    for m in results:
+        v = results[m].get("min_eig", float("nan"))
+        results[m]["min_eig_norm"] = v / rand_min_eig if rand_min_eig != 0 else float("nan")
+
+    fig, axes = plt.subplots(1, len(panels), figsize=(4 * len(panels), 5))
+    if len(panels) == 1:
+        axes = [axes]
+
+    for ax, (key, label, higher_is_better) in zip(axes, panels):
+        vals = [results[m].get(key, float("nan")) for m in methods]
+        errs = [results[m].get(f"{key}_std", 0.0) for m in methods]
+        finite = [v for v in vals if np.isfinite(v)]
+        best_val = (max(finite) if higher_is_better else min(finite)) if finite else None
+
+        bars = ax.bar(range(n), vals, yerr=errs, capsize=4, color=colors,
+                      alpha=0.85, edgecolor="white", linewidth=0.6)
+        if best_val is not None:
+            for bar, v in zip(bars, vals):
+                if np.isfinite(v) and abs(v - best_val) < 1e-10 * max(abs(best_val), 1.0):
+                    bar.set_edgecolor("#16a34a")
+                    bar.set_linewidth(2.5)
+
+        ax.set_xticks(range(n))
+        ax.set_xticklabels(methods, rotation=35, ha="right", fontsize=8)
+        ax.set_title(label, fontsize=9)
+        ax.grid(axis="y", alpha=0.25, linewidth=0.5)
+        ax.spines[["top", "right"]].set_visible(False)
+
+    fig.suptitle("Benchmark: pose-selection method comparison", fontsize=11, fontweight="bold")
     fig.tight_layout()
 
     if save_path:
