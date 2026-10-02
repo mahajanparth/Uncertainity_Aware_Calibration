@@ -1,0 +1,566 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,bm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[backend=biber,style=numeric,sorting=none,natbib=true]{biblatex}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\addbibresource{references.bib}
+
+\title{Certifiable Calibration Data Design via Information-Theoretic Subset Selection}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Calibration quality in robotics depends not only on the estimation backend, but
+also on the informativeness of the data used for calibration. In practice,
+calibration datasets are still commonly collected using heuristics such as
+coverage, view diversity, or operator intuition. While these heuristics are
+often useful, they do not quantify whether a selected dataset sufficiently
+constrains the calibration parameters of interest. This paper formulates
+calibration data collection as a finite-budget experimental-design problem over
+candidate views, poses, or trajectory segments. We use the marginal Fisher
+information matrix of the calibration parameters as the design object and study
+E-, A-, and D-optimal subset selection. To move beyond heuristic selection, we
+combine greedy and Frank--Wolfe optimization with post-hoc certification from
+the relaxed objective value, which upper-bounds the best achievable discrete
+objective under the same linearization model. Experiments in Isaac Sim, on two
+real ChArUco capture sessions, and with two downstream backends show a nuanced
+picture. Information-aware subset selection consistently outperforms random and
+geometric coverage baselines. Exhaustive search on reduced candidate pools shows
+that the relaxation provides a meaningful certificate on discrete subset
+quality. At the same time, the best design criterion depends on the downstream
+solver: E-optimal selection is effective when the linearized information model
+tracks estimator behavior, whereas A-optimal selection is more robust for
+bundle-adjustment backends such as Kalibr. These results suggest that
+calibration should be treated as a data-design problem, but that certification
+must be interpreted relative to the adopted information model and solver
+assumptions.
+\end{abstract}
+
+\section{Introduction}
+Robotic perception systems depend critically on accurate calibration.
+Errors in camera intrinsics, sensor extrinsics, temporal offsets, or related
+latent parameters propagate directly into visual odometry, SLAM, sensor fusion,
+and control. For that reason, calibration has traditionally been treated as a
+central estimation problem in robotics and computer vision.
+
+In practice, however, calibration success depends on more than the optimizer.
+Even strong calibration backends fail or become unstable when the collected data
+weakly excites important parameter directions. Poor parallax, repeated
+near-identical views, target placements concentrated near the image center, or
+trajectory segments that leave certain modes nearly unobservable can all yield
+fragile estimates despite low training reprojection error. Practitioners
+therefore face a second problem that is often treated informally: how to collect
+the data that makes calibration well-conditioned in the first place.
+
+Most commonly used pipelines do not explicitly solve this upstream design
+problem. Classical calibration methods such as Zhang's planar approach and
+practical robotics toolchains such as Kalibr are highly effective once a
+dataset has already been collected
+\citep{zhang2000flexible,furgale2013kalibr,kalibr_toolbox}. Active and
+next-best-view methods improve the collection process by proposing new poses
+based on uncertainty reduction, visibility, or expected information gain
+\citep{richardson2013aprilcal,peng2019calibration,rojtberg2018efficient,yang2023nbv,wang2025active}.
+Observability-aware self-calibration work has likewise shown that not all motion
+segments are equally useful
+\citep{maye2013self,schneider2017informative,schneider2019observability,yang2023online}.
+Yet a gap remains between ``better data'' and ``certifiably informative data'':
+most prior methods are sequential, heuristic, or solver-specific, rather than a
+global subset-selection formulation with a quantitative certificate on the final
+selected set.
+
+This paper takes a step toward that goal. We formulate calibration data
+collection as a finite-budget subset-selection problem over a candidate pool of
+views, poses, or motion segments. Using the marginal Fisher information matrix
+of the calibration parameters, we optimize standard experimental-design
+criteria, with particular emphasis on E-optimality, which strengthens the
+weakest observable direction. We then use a continuous relaxation to obtain a
+computable upper bound on the best achievable discrete objective under the same
+linearization model. This does \emph{not} certify global optimality of the
+nonlinear calibration estimate itself, nor does it imply that every downstream
+backend will prefer the same subset. What it does provide is a clear,
+model-relative statement about how good the selected data is under a stated
+design surrogate.
+
+The main message of the paper is therefore more precise than ``E-optimality is
+always best.'' Instead, we argue that:
+\begin{enumerate}[leftmargin=1.5em]
+    \item calibration should be treated as a data-design problem in addition to
+    an estimation problem;
+    \item information-theoretic subset selection provides a principled way to
+    rank candidate calibration data;
+    \item continuous relaxations provide meaningful post-hoc certificates on the
+    adopted design objective; and
+    \item the best design criterion depends on the mismatch between the
+    linearized information surrogate and the downstream solver.
+\end{enumerate}
+
+This framing is especially relevant for robotics, where calibration often has to
+be performed under limited operator time, motion budget, or sensing constraints.
+A method that can say not just ``this dataset seems reasonable,'' but ``this
+dataset is near-optimal under a stated design model'' is useful even when the
+certificate is explicitly model-relative rather than absolute.
+
+\section{Related Work}
+\subsection{Calibration Backends}
+Classical calibration methods estimate intrinsics and extrinsics from a fixed
+dataset. Zhang's planar-pattern method remains a foundational reference for
+practical camera calibration \citep{zhang2000flexible}, while Kalibr has become
+a widely used robotics backend for multi-camera and visual-inertial calibration
+\citep{furgale2013kalibr,kalibr_toolbox}. These are estimation backends, not
+data-design methods.
+
+\subsection{Observability and Informative Data}
+Observability-aware calibration work has shown that calibration quality depends
+strongly on excitation and motion diversity. Information-theoretic
+self-calibration, informative segment retention, and observability analysis for
+visual-inertial systems all support the view that weak datasets are a primary
+source of failure
+\citep{maye2013self,schneider2017informative,schneider2019observability,yang2023online}.
+Our formulation is aligned with this literature, but focuses on fixed-budget
+subset selection with post-hoc certification.
+
+\subsection{Active Calibration and Guided Capture}
+AprilCal, Calibration Wizard, and next-best-view systems explicitly guide the
+collection process
+\citep{richardson2013aprilcal,peng2019calibration,rojtberg2018efficient,yang2023nbv,wang2025active}.
+These methods are highly relevant because they recognize the importance of the
+data-acquisition stage. The main difference in our setting is that we optimize
+over a finite candidate pool and ask for a certificate on the quality of the
+final selected subset rather than a sequential policy alone.
+
+\subsection{Certifiable Robotics and OASIS}
+Recent robotics work has used relaxation-based tools to provide certificates for
+either estimation or design. Certifiable calibration solvers focus on globally
+solving a fixed calibration problem \citep{giamou2019certifiable}, whereas
+OASIS formulates sensor placement for SLAM as an E-optimal subset-selection
+problem with verification through convex relaxation \citep{kaveti2023oasis}. Our
+work is conceptually closest to the latter: the goal is not to certify the
+nonlinear calibration estimate itself, but to certify the informativeness of the
+selected data under a stated surrogate model.
+
+\subsection{Learning-Based Calibration}
+Learning-based approaches such as RegNet, CalibNet, and LCCNet improve
+automation and targetless operation
+\citep{schneider2017regnet,iyer2018calibnet,lv2021lccnet}. Recent surveys and
+critiques, however, continue to report challenges in generalization and
+evaluation consistency \citep{liao2023survey,huang2025whatmatters}. These
+methods address a different question from ours: they improve how calibration is
+predicted or refined, but do not directly provide observability certificates on
+the collected dataset.
+
+\section{Problem Formulation}
+Let
+\begin{equation}
+\mathcal{C} = \{c_1,\dots,c_N\}
+\end{equation}
+be a finite set of candidate calibration data units. A candidate may correspond
+to a single image, a target pose, a robot configuration, or a short trajectory
+segment. We seek a subset of size $K$ that is maximally informative for a set
+of calibration parameters $\theta \in \mathbb{R}^p$.
+
+Let $\eta$ denote nuisance variables such as per-frame target pose or camera
+pose. For candidate $c_i$, let $r_i(\theta,\eta)$ be the residual vector and
+let $\Sigma_i$ be the measurement covariance. Under a Gauss--Newton
+approximation, the candidate-level Fisher information is
+\begin{equation}
+\mathcal{I}_i
+\approx
+J_i^\top \Sigma_i^{-1} J_i,
+\qquad
+J_i = \begin{bmatrix} J_{i,\theta} & J_{i,\eta} \end{bmatrix}.
+\end{equation}
+Because the information contributions add across conditionally independent
+measurements,
+\begin{equation}
+\mathcal{I}(u) = \sum_{i=1}^{N} u_i \mathcal{I}_i,
+\qquad
+u \in \{0,1\}^N,
+\qquad
+\mathbf{1}^\top u = K.
+\end{equation}
+
+Partitioning the full information matrix into calibration and nuisance blocks,
+\begin{equation}
+\mathcal{I}(u) =
+\begin{bmatrix}
+\mathcal{I}_{\theta\theta}(u) & \mathcal{I}_{\theta\eta}(u) \\
+\mathcal{I}_{\eta\theta}(u) & \mathcal{I}_{\eta\eta}(u)
+\end{bmatrix},
+\end{equation}
+we score only the calibration parameters through the Schur complement
+\begin{equation}
+\widetilde{\mathcal{I}}_\theta(u)
+=
+\mathcal{I}_{\theta\theta}(u)
+- \mathcal{I}_{\theta\eta}(u)\mathcal{I}_{\eta\eta}(u)^{-1}\mathcal{I}_{\eta\theta}(u).
+\label{eq:schur}
+\end{equation}
+This marginal information matrix is the design object used throughout the paper.
+
+We study three standard criteria:
+\begin{align}
+\text{E-optimal: } &
+\max_{u}
+\lambda_{\min}\!\bigl(\widetilde{\mathcal{I}}_\theta(u)\bigr),
+\\
+\text{A-optimal: } &
+\min_{u}
+\operatorname{tr}\!\bigl(\widetilde{\mathcal{I}}_\theta(u)^{-1}\bigr),
+\\
+\text{D-optimal: } &
+\max_{u}
+\log\det\!\bigl(\widetilde{\mathcal{I}}_\theta(u)\bigr),
+\end{align}
+all under the binary budget constraint above. E-optimality is attractive
+because it explicitly strengthens the weakest observable direction, but one of
+the conclusions of this paper is that no single criterion dominates across all
+solvers and noise regimes.
+
+\section{Method}
+\subsection{Greedy Discrete Selection}
+The simplest baseline is greedy subset construction. Starting from the empty
+set, each step adds the candidate that most improves the chosen design
+criterion. This yields practical discrete baselines for E-, A-, and D-optimal
+selection.
+
+\subsection{Continuous Relaxation}
+To obtain a certificate, we relax the binary selection variables to continuous
+weights:
+\begin{equation}
+u \in [0,1]^N,
+\qquad
+\mathbf{1}^\top u = K.
+\label{eq:relax}
+\end{equation}
+This feasible set strictly contains the binary feasible set, so the relaxed
+optimum upper-bounds the best discrete objective for maximization problems and
+lower-bounds it for minimization problems. For E-optimality, the relaxed problem
+is
+\begin{equation}
+\max_{u \in [0,1]^N,\ \mathbf{1}^\top u = K}
+\lambda_{\min}\!\bigl(\widetilde{\mathcal{I}}_\theta(u)\bigr).
+\label{eq:e_relax}
+\end{equation}
+We optimize the relaxation with Frank--Wolfe.
+
+\subsection{Rounding and Certification}
+After optimization, the continuous solution is rounded to a binary subset by
+selecting the $K$ largest weights. Let $f_{\mathrm{relax}}$ be the relaxed
+objective and let $f_{\mathrm{disc}}$ be the objective of the rounded subset.
+For maximization criteria, the relaxed value is an upper bound on the unknown
+integer optimum $f^\star$:
+\begin{equation}
+f_{\mathrm{disc}} \leq f^\star \leq f_{\mathrm{relax}}.
+\end{equation}
+This yields a certificate gap
+\begin{equation}
+\Delta_{\mathrm{cert}} = f_{\mathrm{relax}} - f_{\mathrm{disc}},
+\end{equation}
+or a normalized variant if desired. A small gap means the rounded subset is
+near-optimal under the chosen information model.
+
+This point is crucial: the certificate applies to the \emph{design surrogate},
+not to nonlinear calibration accuracy in general. It does not certify global
+optimality of the downstream estimator, nor does it guarantee that all
+backends will prefer the same subset.
+
+\subsection{Practical Computation}
+In the experiments, per-candidate information blocks are computed at a fixed
+bootstrap linearization point. The nuisance block is block-diagonal because each
+candidate contributes an independent pose block, so the Schur complement can be
+formed efficiently. The Frank--Wolfe linear minimization oracle under the
+budget-constrained box relaxation has a closed-form top-$K$ solution, which
+replaces a generic LP solve. In the final experiments we use a conservative
+stopping rule requiring both small relative objective change and small duality
+gap; this avoids premature stopping but does not eliminate small-budget
+rounding issues.
+
+\begin{algorithm}[ht]
+\caption{Certifiable Calibration Data Selection}
+\begin{algorithmic}[1]
+\Require Candidate pool $\mathcal{C}$, budget $K$, linearization point
+$(\bar{\theta},\bar{\eta})$, design criterion $J$
+\State Compute per-candidate information blocks $\mathcal{I}_i$
+\State Build $\widetilde{\mathcal{I}}_\theta(u)$ via the Schur complement
+\State Optimize the relaxed problem for criterion $J$ with Frank--Wolfe
+\State Round the final continuous weights to a binary top-$K$ subset
+\State Evaluate the discrete objective and certificate gap
+\State Return selected subset, objective value, and certificate gap
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Scope}
+The method makes three assumptions that must be explicit.
+First, informativeness is measured relative to a chosen linearization point.
+Second, certification applies to the information-theoretic surrogate, not to
+arbitrary nonlinear solver behavior. Third, a dataset that is strong for one
+backend need not be optimal for another. We therefore treat the certificate as
+model-relative evidence rather than an absolute claim about all calibration
+pipelines.
+
+\section{Experimental Protocol}
+\subsection{Questions}
+We evaluate five questions:
+\begin{enumerate}[leftmargin=1.5em]
+    \item Do information-theoretic subsets outperform random and coverage
+    baselines?
+    \item Does the relaxed objective provide a meaningful certificate on subset
+    quality?
+    \item How sensitive are conclusions to noise, distortion, and subset budget?
+    \item Do the conclusions persist in real data?
+    \item How strongly do the conclusions depend on the downstream calibration
+    backend?
+\end{enumerate}
+
+\subsection{Simulation Setup}
+The main synthetic benchmark uses $N=720$ candidate poses generated in Isaac
+Sim on a hemisphere around a fixed target. The default budget is $K=20$. Two
+targets are compared under matched geometry: an AprilGrid and a ChArUco board
+with identical corner count, pitch, and physical extent. Noise is added as
+i.i.d.\ Gaussian image perturbation at near-noiseless, moderate, and high
+levels. Additional experiments introduce medium and high Brown--Conrady
+distortion. The main downstream backend is OpenCV
+\texttt{cv2.calibrateCamera}, which lets us compare all selection methods under
+a common solver.
+
+\subsection{Methods and Metrics}
+We compare random subset selection, geometric coverage via farthest-point
+sampling in translation space, greedy E-optimal, A-optimal, and D-optimal
+selection, and Frank--Wolfe E-optimal, A-optimal, and D-optimal selection.
+
+We report both design and calibration metrics. Design quality is measured using
+$\lambda_{\min}(\widetilde{\mathcal{I}}_\theta)$ and $\log\det
+\widetilde{\mathcal{I}}_\theta$. Calibration quality is measured using focal
+length error, principal-point error, distortion-parameter error, training
+reprojection RMS, and held-out reprojection RMS. We intentionally avoid a
+single aggregate intrinsic-parameter norm because it mixes pixel-valued and
+dimensionless quantities in a way that is hard to interpret physically.
+
+\subsection{Real-World Validation}
+We use two real ChArUco sessions. The first is a handheld capture with
+$N=76$ retained frames and a 20-frame held-out split. The second is a more
+challenging session with stronger out-of-plane tilts and multiple depths,
+yielding $N=66$ candidate frames after filtering. In the second session,
+held-out poses are fixed once using all-frame intrinsics, specifically to avoid
+per-method re-fitting that could otherwise mask intrinsic differences.
+
+\subsection{Alternative Backend}
+To test solver dependence, we repeat the evaluation with Kalibr on the noiseless
+Isaac Sim AprilGrid benchmark. Here each method selects from the same 700-view
+candidate pool after reserving 20 held-out views. Kalibr performs joint
+bundle-adjustment over intrinsics and per-view extrinsics, providing a strong
+contrast to the OpenCV fixed-backend experiments.
+
+\section{Results}
+\subsection{Information-Aware Selection Beats Heuristics}
+Across both targets and all tested noise levels, information-aware selection
+consistently outperforms random subsets and geometric coverage. This gap is
+especially visible in held-out error at moderate and high noise, where coverage
+can look geometrically diverse while still leaving important calibration
+directions weakly constrained.
+
+One particularly robust finding is that training reprojection RMS varies little
+across methods even when held-out performance differs substantially. In other
+words, low training residual is not a reliable indicator that the chosen dataset
+is informative. This is an important practical message independent of which
+design criterion ultimately wins.
+
+\subsection{No Single Criterion Dominates}
+The OpenCV-based experiments show a consistent but nuanced pattern.
+At moderate noise on AprilGrid, FW-E attains the highest
+$\lambda_{\min}$ ($0.874$), Greedy-E achieves the best focal error
+($0.150$ px), and FW-A achieves the best held-out RMS ($0.819$ px).
+At high noise, A-optimal becomes the most reliable criterion for held-out
+accuracy, with the best held-out RMS on both AprilGrid ($1.782$ px) and matched
+ChArUco ($2.483$ px).
+
+This is the right place to narrow the paper's claim. The evidence does not
+support ``E-optimality universally wins.'' What it supports is that
+information-theoretic design is useful, that E-optimality is valuable when the
+weakest mode is the main concern, and that A-optimality is often more robust
+when noise or solver coupling makes balanced conditioning more important than
+the single weakest direction.
+
+\subsection{The Certificate Is Meaningful for the Design Objective}
+Exhaustive search on reduced candidate pools shows that the relaxed objective is
+a useful certificate on discrete subset quality. On the tested small-$N$
+instances, Frank--Wolfe E-optimal rounding comes within $0$--$2.5\%$ of the
+true discrete optimum, whereas greedy E-optimal selection is typically
+$7$--$19\%$ below optimum. The relaxed value remains a valid upper bound on the
+unknown integer optimum under the same surrogate.
+
+These results do not prove that the same near-optimality gap holds at large
+scale, but they do support the claim that the relaxation is more than a
+numerical convenience. It yields a real, interpretable certificate on the
+subset-selection problem being solved.
+
+\subsection{Budget and Distortion Effects}
+The budget sweep shows strong diminishing returns beyond roughly
+$K \approx 20$--$30$ in the tested settings. This is useful operationally:
+substantial gains are realized with relatively small datasets, but there is
+little benefit in continuing to add near-redundant views.
+
+At the same time, the budget sweep exposes an important limitation. Continuous
+E-optimal relaxation can round poorly at small budgets because the solution
+remains too diffuse. This is why A-optimal selection is the safer default when
+$K$ is very small, even if E-optimality becomes competitive or superior once
+the budget is large enough for the relaxation to concentrate.
+
+The distortion experiments are encouraging. Under both medium and high
+Brown--Conrady distortion, the qualitative ranking among methods remains similar
+to the zero-distortion case. This suggests that the subset-selection behavior is
+not a fragile artifact of the ideal pinhole setting alone.
+
+\subsection{Real-World Validation Supports the Main Trend}
+The two real ChArUco sessions are smaller than the synthetic benchmark, but
+they are still informative.
+
+In the first session, Greedy-E achieves the best held-out RMS ($0.752$ px),
+followed closely by FW-E ($0.764$ px), while coverage is worst ($1.044$ px).
+In the second, more honest fixed-pose evaluation, A-optimal and FW-A achieve
+the best held-out RMS ($0.737$ px), Greedy-E follows at $0.772$ px, and random
+selection is much worse at $1.963$ px. The most important real-world conclusion
+is therefore not which FIM criterion wins by a small margin, but that
+information-aware selection consistently beats random and geometric heuristics.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Representative real-world results.
+Session 1 uses a standard held-out reprojection protocol.
+Session 3 fixes held-out poses once across all methods to avoid per-method
+re-fitting effects.}
+\label{tab:real_world_summary}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lrrr}
+\toprule
+Setting & Best method(s) & Best held-out RMS & Baseline comparison \\
+\midrule
+Session 1 & Greedy-E & $0.752$ px & Coverage: $1.044$ px \\
+Session 3 & A-optimal, FW-A & $0.737$ px & Random: $1.963$ px \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Backend Sensitivity Is the Paper's Sharpest Result}
+The strongest cautionary result comes from the Kalibr backend. At
+$K=20$, A-optimal achieves a held-out RMS of $0.090$ px, whereas Greedy-E and
+FW-E degrade to $0.732$ px and $0.761$ px respectively. This is not a small
+reordering. It is a qualitative reversal of the OpenCV-style narrative.
+
+Inspection of the selected subsets explains why. Under the adopted surrogate,
+E-optimal selection can favor a tightly clustered set of views that strongly
+constrain the weakest mode of the marginal information matrix. Kalibr, however,
+jointly refines intrinsics and per-view extrinsics. It benefits from broader
+angular spread across the hemisphere to keep the pose subspace well-conditioned.
+That behavior is captured more naturally by A-optimality than by a pure
+weakest-mode objective.
+
+This result should not be hidden because it actually clarifies the contribution.
+The certificate is meaningful relative to the adopted surrogate model; it is
+not a guarantee that every downstream solver will prefer the same subset. For
+backends whose behavior departs substantially from the local information model,
+A-optimality or a geometry-aware hybrid criterion may be the better practical
+choice.
+
+\subsection{A Practical Criterion Guide}
+The experiments suggest three diagnostic axes for choosing a criterion:
+solver type, noise regime, and budget.
+
+If the downstream solver conditions on known or pre-solved poses, E-optimality
+is attractive once the budget is large enough for reliable rounding. If the
+solver jointly optimizes intrinsics and per-view extrinsics, A-optimality is the
+safer choice because it promotes broader global conditioning. Likewise,
+A-optimality is safer at high noise and at small budgets, whereas E-optimality
+is most compelling for fixed-pose solvers at moderate noise and
+$K \ge 20$.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Practical criterion selection guide.}
+\label{tab:criterion_guide}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{llll}
+\toprule
+Solver type & Noise level & Budget & Recommended criterion \\
+\midrule
+Fixed-pose solver & Low to moderate & $K < 15$ & A-optimal \\
+Fixed-pose solver & Low to moderate & $K \ge 20$ & FW-E or Greedy-E \\
+Fixed-pose solver & High noise & Any & A-optimal \\
+Joint BA solver & Any & Any & A-optimal \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Discussion}
+Three conclusions stand out.
+
+First, calibration data selection should be treated as an optimization problem
+rather than an informal capture step. Even simple information-theoretic subset
+selection beats strong heuristic baselines in many settings.
+
+Second, certification is possible, but only in a model-relative sense. The
+continuous relaxation provides a valid bound for the adopted design problem, not
+for arbitrary nonlinear calibration behavior. This still has practical value:
+it lets a user compare subsets with a stated confidence about near-optimality
+under the chosen surrogate.
+
+Third, solver mismatch matters. This is not a side detail. It is the main
+boundary of the present approach. If the downstream backend behaves similarly to
+the linearized information model, E-optimality is attractive because it
+strengthens the weakest mode directly. If the backend relies on broader
+geometric diversity, a criterion that balances information globally, such as
+A-optimality, can be more robust.
+
+The current evidence also defines clear limitations.
+The certification claim is relative to the design surrogate, not the nonlinear
+estimator. Most experiments are still synthetic. The real-world validation is
+target-based and monocular rather than a broad cross-sensor study. Small-budget
+rounding remains a known weakness of the current continuous E-optimal pipeline.
+These are not peripheral caveats; they define the present scope of what is
+supported.
+
+\section{Conclusion}
+This paper reformulated calibration data collection as a certifiable
+subset-selection problem over candidate measurements. By combining Fisher
+information-based design criteria with continuous relaxation and post-hoc
+certification, it provided a principled alternative to heuristic calibration
+capture. The experiments show that information-aware selection improves over
+random and coverage-based baselines, that the relaxed objective provides a
+meaningful certificate on the adopted design problem, and that the best
+criterion depends strongly on the downstream backend. The broader lesson is
+that certification in calibration should be stated carefully: it is strongest
+when the design surrogate, solver, and evaluation protocol are aligned. Future
+work should focus on backend-aware design criteria, stronger real-world
+validation, and tighter rounding schemes for low-budget regimes.
+
+\paragraph{Submission note.}
+This revised draft intentionally trims the table-heavy presentation of the
+working manuscript and sharpens the claims to match the evidence. The full
+K-sweep, distortion, and per-metric tables are better treated as supplementary
+material in a conference submission.
+
+\printbibliography
+
+\end{document}

@@ -1,0 +1,239 @@
+% Auto-generated K=20 tables for ICRA 2026
+
+% Method order: FW-E, Greedy-E, A-optimal, D-optimal, Random, Coverage, Motion-div.
+
+
+% ---- Table 1: aprilgrid_noiseless ----
+
+\begin{table}[ht]
+\centering
+\setlength{\tabcolsep}{4pt}
+\caption{AprilGrid, near-noiseless ($\sigma{=}0.01$\,px). $N{=}720$, $K{=}20$. Param-error and held-out RMS in pixels. Random: mean over 25 trials. Focal/PP errors in pixels, distortion error unitless, rotation error in degrees, translation error in cm.}
+\label{tab:aprilgrid_noiseless}
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+Method & $\lambda_{\min}$ & $\log\det$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & $\epsilon_R$\,($^\circ$) & $\epsilon_t$\,(cm) & Train-RMS & Held-out \\
+\midrule
+\textbf{FW-E} & \textbf{$2.18\!\times\!10^{3}$} & 155 & \textbf{$4.11\!\times\!10^{-3}$} & 0.0188 & $2.01\!\times\!10^{-4}$ & $6.22\!\times\!10^{-4}$ & $5.62\!\times\!10^{-4}$ & 0.014 & 0.0231 \\
+Greedy-E & $2.09\!\times\!10^{3}$ & 155 & $5.07\!\times\!10^{-3}$ & 0.0151 & $6.00\!\times\!10^{-4}$ & $3.89\!\times\!10^{-4}$ & $4.31\!\times\!10^{-4}$ & 0.0141 & 0.0198 \\
+\textbf{A-optimal} & $2.11\!\times\!10^{3}$ & \textbf{156} & $7.11\!\times\!10^{-3}$ & \textbf{$8.06\!\times\!10^{-3}$} & $7.09\!\times\!10^{-4}$ & \textbf{$3.48\!\times\!10^{-4}$} & \textbf{$3.37\!\times\!10^{-4}$} & 0.0139 & \textbf{0.0152} \\
+\textbf{D-optimal} & $1.72\!\times\!10^{3}$ & \textbf{156} & 0.0105 & 0.0287 & $3.58\!\times\!10^{-4}$ & $6.95\!\times\!10^{-4}$ & $8.91\!\times\!10^{-4}$ & \textbf{0.0139} & 0.031 \\
+Random (mean) & 892 & 153 & 0.0138 & 0.0217 & $7.16\!\times\!10^{-4}$ & $7.23\!\times\!10^{-4}$ & $5.63\!\times\!10^{-4}$ & 0.0139 & 0.0251 \\
+Coverage & 761 & 152 & $5.67\!\times\!10^{-3}$ & 0.0313 & $5.71\!\times\!10^{-4}$ & $1.01\!\times\!10^{-3}$ & $9.38\!\times\!10^{-4}$ & 0.014 & 0.0342 \\
+\textbf{Motion-div.} & 663 & 152 & 0.011 & 0.0247 & \textbf{$1.70\!\times\!10^{-4}$} & $9.33\!\times\!10^{-4}$ & $6.08\!\times\!10^{-4}$ & \textbf{0.0138} & 0.028 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---- Table 2: charuco_noiseless ----
+
+\begin{table}[ht]
+\centering
+\setlength{\tabcolsep}{4pt}
+\caption{Matched ChArUco board ($13{\times}13$, 144\,pts, 46\,cm), near-noiseless ($\sigma{=}0.01$\,px). $N{=}720$, $K{=}20$. Param-error and held-out RMS in pixels. Random: mean over 25 trials. Focal/PP errors in pixels, distortion error unitless, rotation error in degrees, translation error in cm.}
+\label{tab:charuco_noiseless}
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+Method & $\lambda_{\min}$ & $\log\det$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & $\epsilon_R$\,($^\circ$) & $\epsilon_t$\,(cm) & Train-RMS & Held-out \\
+\midrule
+\textbf{FW-E} & $1.94\!\times\!10^{3}$ & 155 & \textbf{$5.88\!\times\!10^{-3}$} & 0.0216 & $1.63\!\times\!10^{-4}$ & $6.72\!\times\!10^{-4}$ & $5.45\!\times\!10^{-4}$ & 0.0139 & 0.0252 \\
+\textbf{Greedy-E} & \textbf{$2.04\!\times\!10^{3}$} & \textbf{156} & $8.43\!\times\!10^{-3}$ & 0.0182 & \textbf{$2.51\!\times\!10^{-5}$} & $5.96\!\times\!10^{-4}$ & $5.15\!\times\!10^{-4}$ & 0.0141 & 0.0225 \\
+\textbf{A-optimal} & $2.01\!\times\!10^{3}$ & \textbf{156} & $8.02\!\times\!10^{-3}$ & 0.029 & $1.12\!\times\!10^{-4}$ & $8.16\!\times\!10^{-4}$ & $6.90\!\times\!10^{-4}$ & 0.0139 & 0.0315 \\
+\textbf{D-optimal} & $1.84\!\times\!10^{3}$ & \textbf{156} & 0.0161 & 0.0271 & $7.70\!\times\!10^{-5}$ & $8.72\!\times\!10^{-4}$ & $7.52\!\times\!10^{-4}$ & 0.014 & 0.0311 \\
+\textbf{Random (mean)} & 885 & 153 & $8.81\!\times\!10^{-3}$ & \textbf{0.0141} & $5.26\!\times\!10^{-4}$ & \textbf{$4.26\!\times\!10^{-4}$} & \textbf{$3.49\!\times\!10^{-4}$} & \textbf{0.0136} & \textbf{0.018} \\
+Coverage & 715 & 151 & 0.0217 & 0.0492 & $7.13\!\times\!10^{-4}$ & $1.43\!\times\!10^{-3}$ & $1.47\!\times\!10^{-3}$ & 0.0138 & 0.0525 \\
+Motion-div. & 592 & 151 & 0.022 & 0.0612 & $6.43\!\times\!10^{-4}$ & $1.64\!\times\!10^{-3}$ & $1.37\!\times\!10^{-3}$ & 0.0139 & 0.0628 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---- Table 3: aprilgrid_sigma05 ----
+
+\begin{table}[ht]
+\centering
+\setlength{\tabcolsep}{4pt}
+\caption{AprilGrid, realistic noise ($\sigma{=}0.5$~px). $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless, rotation error in degrees, translation error in cm.}
+\label{tab:aprilgrid_sigma05}
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+Method & $\lambda_{\min}$ & $\log\det$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & $\epsilon_R$\,($^\circ$) & $\epsilon_t$\,(cm) & Train-RMS & Held-out \\
+\midrule
+\textbf{FW-E} & \textbf{0.874} & 84.9 & 0.203 & 0.648 & 0.0117 & \textbf{0.0208} & 0.019 & \textbf{0.695} & 0.904 \\
+\textbf{Greedy-E} & 0.842 & 85 & \textbf{0.15} & \textbf{0.53} & \textbf{$3.43\!\times\!10^{-3}$} & 0.0216 & \textbf{0.0184} & 0.696 & \textbf{0.83} \\
+\textbf{A-optimal} & 0.851 & \textbf{85.5} & 0.328 & 0.623 & 0.0313 & 0.024 & 0.0235 & 0.696 & 0.893 \\
+\textbf{D-optimal} & 0.691 & \textbf{85.9} & 0.202 & 1.08 & $4.42\!\times\!10^{-3}$ & 0.0317 & 0.0356 & \textbf{0.693} & 1.25 \\
+Random (mean) & 0.359 & 82.1 & 0.691 & 1.07 & 0.0358 & 0.0358 & 0.0278 & 0.695 & 1.24 \\
+Coverage & 0.307 & 81.7 & 0.278 & 1.59 & 0.0299 & 0.0511 & 0.0476 & 0.702 & 1.73 \\
+\textbf{Motion-div.} & 0.268 & 81.4 & 0.548 & 1.24 & $8.43\!\times\!10^{-3}$ & 0.0468 & 0.0306 & \textbf{0.691} & 1.41 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---- Table 4: charuco_sigma05 ----
+
+\begin{table}[ht]
+\centering
+\setlength{\tabcolsep}{4pt}
+\caption{Matched ChArUco board ($13{\times}13$, 144\,pts, 46\,cm), realistic noise ($\sigma{=}0.5$~px). $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless, rotation error in degrees, translation error in cm.}
+\label{tab:charuco_sigma05}
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+Method & $\lambda_{\min}$ & $\log\det$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & $\epsilon_R$\,($^\circ$) & $\epsilon_t$\,(cm) & Train-RMS & Held-out \\
+\midrule
+\textbf{FW-E} & 0.778 & 85.1 & 0.293 & 1.09 & $8.81\!\times\!10^{-3}$ & 0.034 & 0.0276 & 0.695 & 1.27 \\
+\textbf{Greedy-E} & \textbf{0.809} & 85.2 & 0.424 & 1.32 & \textbf{$5.01\!\times\!10^{-3}$} & 0.0449 & 0.0381 & 0.7 & 1.53 \\
+\textbf{A-optimal} & \textbf{0.809} & 85.3 & \textbf{0.191} & 1.18 & 0.0128 & 0.0414 & 0.0323 & 0.69 & 1.39 \\
+\textbf{D-optimal} & 0.741 & \textbf{85.9} & 0.864 & 1.15 & $9.36\!\times\!10^{-3}$ & 0.0377 & 0.0335 & 0.701 & 1.35 \\
+\textbf{Random (mean)} & 0.356 & 82.1 & 0.434 & \textbf{0.698} & 0.0259 & \textbf{0.0212} & \textbf{0.0173} & \textbf{0.681} & \textbf{0.898} \\
+Coverage & 0.288 & 80.9 & 1.08 & 2.46 & 0.0358 & 0.0715 & 0.0736 & 0.692 & 2.63 \\
+Motion-div. & 0.239 & 80.8 & 1.11 & 3.1 & 0.0328 & 0.083 & 0.0695 & 0.698 & 3.18 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---- Table 5: aprilgrid_sigma10 ----
+
+\begin{table}[ht]
+\centering
+\setlength{\tabcolsep}{4pt}
+\caption{AprilGrid, $\sigma{=}1.0$~px noise. $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless, rotation error in degrees, translation error in cm.}
+\label{tab:aprilgrid_sigma10}
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+Method & $\lambda_{\min}$ & $\log\det$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & $\epsilon_R$\,($^\circ$) & $\epsilon_t$\,(cm) & Train-RMS & Held-out \\
+\midrule
+\textbf{FW-E} & \textbf{0.22} & 72.5 & 0.559 & 1.99 & 0.0364 & 0.0617 & 0.058 & 1.4 & 2.4 \\
+\textbf{Greedy-E} & 0.217 & 72.7 & \textbf{0.26} & 1.48 & 0.0526 & 0.0547 & 0.0513 & 1.41 & 2 \\
+\textbf{A-optimal} & 0.215 & \textbf{73.1} & 0.656 & \textbf{1.24} & 0.0631 & \textbf{0.0478} & \textbf{0.0468} & 1.39 & \textbf{1.78} \\
+\textbf{D-optimal} & 0.174 & \textbf{73.4} & 0.405 & 2.16 & \textbf{$8.82\!\times\!10^{-3}$} & 0.0635 & 0.0714 & \textbf{1.39} & 2.5 \\
+Random (mean) & 0.0914 & 69.7 & 1.38 & 2.1 & 0.0712 & 0.0709 & 0.0549 & 1.39 & 2.45 \\
+Coverage & 0.0784 & 69.2 & 0.551 & 3.23 & 0.0621 & 0.104 & 0.0971 & 1.4 & 3.53 \\
+\textbf{Motion-div.} & 0.0683 & 68.9 & 1.09 & 2.49 & 0.0167 & 0.0936 & 0.0612 & \textbf{1.38} & 2.82 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---- Table 6: charuco_sigma10 ----
+
+\begin{table}[ht]
+\centering
+\setlength{\tabcolsep}{4pt}
+\caption{Matched ChArUco board ($13{\times}13$, 144\,pts, 46\,cm), $\sigma{=}1.0$~px noise. $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless, rotation error in degrees, translation error in cm.}
+\label{tab:charuco_sigma10}
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+Method & $\lambda_{\min}$ & $\log\det$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & $\epsilon_R$\,($^\circ$) & $\epsilon_t$\,(cm) & Train-RMS & Held-out \\
+\midrule
+\textbf{FW-E} & 0.0184 & 67 & 8.34 & 10.8 & 0.0471 & 0.162 & 0.213 & 1.38 & 10.5 \\
+\textbf{Greedy-E} & \textbf{0.204} & 72.8 & 0.944 & 3.24 & 0.0327 & 0.105 & 0.084 & 1.38 & 3.67 \\
+\textbf{A-optimal} & \textbf{0.204} & 72.9 & \textbf{0.725} & 2.09 & \textbf{0.0101} & 0.0717 & 0.056 & 1.38 & 2.48 \\
+\textbf{D-optimal} & 0.187 & \textbf{73.4} & 1.73 & 2.31 & 0.0187 & 0.0758 & 0.0673 & 1.4 & 2.71 \\
+\textbf{Random (mean)} & 0.0907 & 69.7 & 0.865 & \textbf{1.39} & 0.0516 & \textbf{0.0424} & \textbf{0.0346} & \textbf{1.36} & \textbf{1.79} \\
+Coverage & 0.0738 & 68.5 & 2.14 & 4.91 & 0.0716 & 0.143 & 0.147 & 1.38 & 5.26 \\
+Motion-div. & 0.0614 & 68.3 & 2.25 & 6.26 & 0.0673 & 0.167 & 0.14 & 1.4 & 6.42 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---- Table 7: FW-E convergence ----
+
+\begin{table}[ht]
+\centering
+\caption{FW-E convergence summary ($N{=}720$, $K{=}20$). At $\sigma{=}1.0$\,px both targets, the high-noise landscape is nearly flat and the duality gap closes early; rounding degrades $\lambda_{\min}$ significantly.}
+\label{tab:fw_convergence}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{llrrr}
+\toprule
+Target & $\sigma$ & Time (s) & Rounded $\lambda_{\min}$ & Held-out RMS \\
+\midrule
+ChArUco (matched) & 0.01 & 1.90 & $1.94\!\times\!10^{3}$ & $0.0252$ \\
+ChArUco (matched) & 0.5 & 1.86 & $0.778$ & $1.27$ \\
+ChArUco (matched) & 1.0 & 1.20 & $0.0184$ & $10.5$ \\
+AprilGrid & 0 & 2.40 & $2.18\!\times\!10^{3}$ & $0.0231$ \\
+AprilGrid & 0.5 & 1.88 & $0.874$ & $0.904$ \\
+AprilGrid & 1.0 & 1.62 & $0.22$ & $2.4$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---- Table 8: Medium distortion ----
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Medium distortion ($k_1{=}{-}0.15$, $k_2{=}0.05$, $p_1{=}p_2{=}0.001$). $\lambda_{\min}(H_{\rm cal})$, $N{=}720$, $K{=}20$. Bold: best per column within each target.}
+\label{tab:distortion_medium}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+ & \multicolumn{3}{c}{AprilGrid} & \multicolumn{3}{c}{Matched ChArUco} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Method & $\sigma{=}0/0.01$ & $\sigma{=}0.5$ & $\sigma{=}1.0$ & $\sigma{=}0/0.01$ & $\sigma{=}0.5$ & $\sigma{=}1.0$ \\
+\midrule
+FW-E & \textbf{$2.41\!\times\!10^{3}$} & \textbf{0.965} & \textbf{0.241} & \textbf{$2.23\!\times\!10^{3}$} & \textbf{0.899} & \textbf{0.225} \\
+Greedy-E & \textbf{$2.41\!\times\!10^{3}$} & 0.926 & \textbf{0.24} & $2.17\!\times\!10^{3}$ & 0.865 & 0.217 \\
+A-opt & $2.37\!\times\!10^{3}$ & 0.905 & 0.228 & $2.13\!\times\!10^{3}$ & 0.861 & 0.216 \\
+D-opt & $1.78\!\times\!10^{3}$ & 0.715 & 0.175 & $1.67\!\times\!10^{3}$ & 0.681 & 0.172 \\
+Random & 937 & 0.377 & 0.0958 & 947 & 0.381 & 0.0967 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---- Table 9: High distortion ----
+
+\begin{table}[ht]
+\centering
+\small
+\caption{High distortion ($k_1{=}{-}0.35$, $k_2{=}0.15$, $p_1{=}p_2{=}0.002$). $\lambda_{\min}(H_{\rm cal})$, $N{=}720$, $K{=}20$. ${}^*$FW-E rounding failure.}
+\label{tab:distortion_high}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+ & \multicolumn{3}{c}{AprilGrid} & \multicolumn{3}{c}{Matched ChArUco} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Method & $\sigma{=}0/0.01$ & $\sigma{=}0.5$ & $\sigma{=}1.0$ & $\sigma{=}0/0.01$ & $\sigma{=}0.5$ & $\sigma{=}1.0$ \\
+\midrule
+FW-E & \textbf{$3.53\!\times\!10^{3}$} & 0.348 & 0.0887 & \textbf{$3.34\!\times\!10^{3}$} & \textbf{1.34} & 0.059 \\
+Greedy-E & $3.48\!\times\!10^{3}$ & \textbf{1.39} & \textbf{0.349} & $3.31\!\times\!10^{3}$ & 1.32 & \textbf{0.332} \\
+A-opt & $3.40\!\times\!10^{3}$ & 1.36 & 0.34 & $3.23\!\times\!10^{3}$ & 1.28 & 0.322 \\
+D-opt & $2.43\!\times\!10^{3}$ & 1.01 & 0.252 & $2.62\!\times\!10^{3}$ & 1.05 & 0.265 \\
+Random & $1.35\!\times\!10^{3}$ & 0.543 & 0.137 & $1.42\!\times\!10^{3}$ & 0.568 & 0.144 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---- Table 10: K-budget sweep ----
+
+\begin{table}[h]
+\centering
+\small
+\caption{$\lambda_{\min}(H_{\mathrm{cal}})$ vs.\ budget $K$. Top: ChArUco, $\sigma{=}0.5$\,px, $N{=}720$. Middle: AprilGrid, $\sigma{=}0.5$\,px, $N{=}720$. Bottom: AprilGrid, $\sigma{=}0.01$\,px (near-noiseless), $N{=}720$. Bold: best per column. ${}^*$FW-E rounding failure.}
+\label{tab:k_sweep}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+Method & $K{{5}}$ & $K{{10}}$ & $K{{15}}$ & $K{{20}}$ & $K{{30}}$ & $K{{50}}$ & $K{{100}}$ & $K{{200}}$ \\
+\midrule
+\multicolumn{9}{l}{\textit{ChArUco, $\sigma=0.5$\,px}} \\[2pt]
+Random & $0.0431$ & $0.122$ & $0.226$ & $0.354$ & $0.589$ & $0.906$ & $2.01$ & $\mathbf{4.03}$ \\
+D-opt & $0.142$ & $0.34$ & $0.56$ & $0.741$ & $1.08$ & $1.59$ & $2.88$ & $\mathbf{5.15}$ \\
+Greedy-E & $0.197$ & $0.415$ & $0.613$ & $0.809$ & $1.18$ & $1.88$ & $3.54$ & $\mathbf{6.63}$ \\
+FW-E & $1.77\!\times\!10^{-3}$ & $0.429$ & $2.34\!\times\!10^{-3}$ & $0.778$ & $1.18$ & $1.89$ & $3.53$ & $\mathbf{6.63}$ \\
+A-opt & $0.19$ & $0.399$ & $0.618$ & $0.809$ & $1.16$ & $1.86$ & $3.52$ & $\mathbf{6.54}$ \\
+\midrule
+\multicolumn{9}{l}{\textit{AprilGrid, $\sigma=0.5$\,px}} \\[2pt]
+Random & $0.045$ & $0.123$ & $0.224$ & $0.346$ & $0.589$ & $0.884$ & $2$ & $\mathbf{4.14}$ \\
+D-opt & $0.142$ & $0.374$ & $0.515$ & $0.691$ & $1.07$ & $1.77$ & $3.1$ & $\mathbf{6.11}$ \\
+Greedy-E & $0.171$ & $0.418$ & $0.629$ & $0.842$ & $1.25$ & $2.01$ & $3.74$ & $\mathbf{6.87}$ \\
+FW-E & $1.11\!\times\!10^{-3}$ & $0.0725$ & $0.235$ & $0.874$ & $1.27$ & $2.02$ & $3.76$ & $\mathbf{6.88}$ \\
+A-opt & $0.222$ & $0.437$ & $0.652$ & $0.851$ & $1.25$ & $1.99$ & $3.7$ & $\mathbf{6.84}$ \\
+\midrule
+\multicolumn{9}{l}{\textit{AprilGrid, $\sigma\approx0$\,px}} \\[2pt]
+Random & $82.4$ & $324$ & $575$ & $877$ & $1.45\!\times\!10^{3}$ & $2.35\!\times\!10^{3}$ & $4.88\!\times\!10^{3}$ & $\mathbf{1.00\!\times\!10^{4}}$ \\
+D-opt & $363$ & $834$ & $1.28\!\times\!10^{3}$ & $1.72\!\times\!10^{3}$ & $2.68\!\times\!10^{3}$ & $4.42\!\times\!10^{3}$ & $7.74\!\times\!10^{3}$ & $\mathbf{1.53\!\times\!10^{4}}$ \\
+Greedy-E & $428$ & $1.04\!\times\!10^{3}$ & $1.56\!\times\!10^{3}$ & $2.09\!\times\!10^{3}$ & $3.11\!\times\!10^{3}$ & $5.01\!\times\!10^{3}$ & $9.35\!\times\!10^{3}$ & $\mathbf{1.72\!\times\!10^{4}}$ \\
+FW-E & $1.16\!\times\!10^{-3}$ & $176$ & $1.62\!\times\!10^{3}$ & $2.18\!\times\!10^{3}$ & $3.17\!\times\!10^{3}$ & $5.06\!\times\!10^{3}$ & $9.38\!\times\!10^{3}$ & $\mathbf{1.72\!\times\!10^{4}}$ \\
+A-opt & $451$ & $1.01\!\times\!10^{3}$ & $1.57\!\times\!10^{3}$ & $2.11\!\times\!10^{3}$ & $3.10\!\times\!10^{3}$ & $4.96\!\times\!10^{3}$ & $9.23\!\times\!10^{3}$ & $\mathbf{1.71\!\times\!10^{4}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}

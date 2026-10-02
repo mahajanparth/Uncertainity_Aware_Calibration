@@ -1,0 +1,10 @@
+method,kalibr_success,focal_err_px,pp_err_px,heldout_rms,time_selection_s,time_kalibr_s
+random,True,0.647,3.343,0.1919,0.695,9.9
+coverage,True,1.029,2.342,0.1822,0.001,10.3
+motion-div,True,0.86,4.443,0.2539,0.269,5.7
+a-optimal,True,0.07,0.501,0.0989,18.906,8.0
+d-optimal,True,0.673,2.737,0.1839,15.928,10.0
+greedy-e,True,10.808,33.388,0.6306,16.38,7.2
+fw-e,True,1.899,2.95,0.2051,2.088,7.3
+fw-a,True,1.747,2.282,0.3121,1.201,4.7
+fw-d,True,2.313,1.676,0.1822,1.199,8.7

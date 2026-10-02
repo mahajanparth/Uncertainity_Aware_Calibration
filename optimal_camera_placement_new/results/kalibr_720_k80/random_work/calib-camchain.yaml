@@ -1,0 +1,8 @@
+cam0:
+  cam_overlaps: []
+  camera_model: pinhole
+  distortion_coeffs: [-0.004868268338911266, 0.0024206161893109927, -0.0005149220128168476, 2.8562798615096768e-05]
+  distortion_model: radtan
+  intrinsics: [1651.3803647498903, 1648.6866049131538, 960.0473624662989, 535.3234492257003]
+  resolution: [1920, 1080]
+  rostopic: /cam0/image_raw

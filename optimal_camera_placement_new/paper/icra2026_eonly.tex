@@ -1,0 +1,927 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,amsthm,bm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[backend=biber,style=numeric,sorting=none,natbib=true]{biblatex}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{multirow}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\addbibresource{references.bib}
+
+\title{Towards Certifiable Data Collection for Robotic Calibration}
+\author{Parth Mahajan}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+% -------------------------------------------------------
+\begin{abstract}
+Calibration is a foundational requirement for robotic perception systems,
+yet calibration quality depends not only on the estimator but also on
+the quality of the collected data.
+In practice, calibration datasets are often gathered using heuristics such
+as field-of-view coverage, motion diversity, or practitioner intuition,
+while most existing pipelines focus on parameter estimation after data
+collection.
+This leaves open an important question: how can one certify that a chosen
+set of calibration views, trajectories, or motion segments is sufficiently
+informative for accurate parameter recovery?
+In this work, we formulate calibration data collection as a certifiable
+experimental design problem.
+We cast the selection of calibration measurements as a subset selection
+problem under an information-theoretic objective that strengthens the weakest
+observable directions of the calibration parameter space.
+Although the resulting optimization problem is NP-hard in general, we show
+how greedy selection together with convex relaxation based post-hoc
+verification can enable the efficient recovery of certifiably informative
+calibration datasets in practice.
+Unlike standard calibration pipelines such as Kalibr, which assume a
+collected dataset and focus on estimation, and unlike next-best-view methods
+that primarily optimize coverage or local uncertainty reduction, our
+formulation targets the informativeness of the collected data itself.
+We also position the method relative to recent learning-based calibration
+work, which improves automation and targetless operation but generally does
+not certify observability or data quality.
+The resulting viewpoint suggests that calibration should be treated not only
+as an estimation problem, but also as a certifiable data design problem.
+\end{abstract}
+
+% -------------------------------------------------------
+\section{Introduction}
+Calibration is a foundational requirement for modern robotic perception
+systems.
+Accurate estimates of camera intrinsics, sensor extrinsics, temporal
+offsets, and other latent parameters are essential for downstream tasks such
+as localization, mapping, sensor fusion, and control.
+Although substantial progress has been made in calibration solvers and
+toolchains, the success of these methods still depends strongly on the
+quality of the collected calibration data.
+Poorly chosen views, trajectories, or motion patterns can leave important
+parameter directions weakly observable, resulting in unstable estimates and
+degraded downstream performance.
+
+In current practice, calibration data collection is often guided by simple
+heuristics such as target coverage, motion diversity, or practitioner
+intuition.
+These strategies can be effective, but they do not explicitly reason about
+whether the resulting dataset is sufficiently informative for accurate
+parameter recovery.
+Classical calibration pipelines such as Kalibr are highly effective at
+estimating multi-camera and visual-inertial calibration parameters from a
+provided dataset, but they largely assume that the dataset has already been
+collected and do not directly solve the upstream problem of selecting
+certifiably informative measurements \citep{furgale2013kalibr,kalibr_toolbox}.
+Likewise, foundational camera calibration methods such as Zhang's
+planar-pattern formulation provide highly practical and influential estimation
+procedures, but not a principled notion of optimal data selection
+\citep{zhang2000flexible}.
+
+A related line of work comes from next-best-view and active calibration
+methods, which select sensing actions or poses to improve visibility, reduce
+uncertainty, or maximize information gain.
+Systems such as AprilCal and Calibration Wizard explicitly acknowledge that
+calibration quality depends strongly on the acquired data and therefore guide
+the user toward improved views \citep{richardson2013aprilcal,peng2019calibration}.
+Later work on efficient pose selection, next-best-view planning for
+eye-in-hand calibration, and observability-aware active trajectory optimization
+further reinforces the importance of calibration-aware data acquisition
+\citep{rojtberg2018efficient,yang2023nbv,wang2025active}.
+However, these methods are typically framed as sequential next-best-pose or
+trajectory-planning procedures rather than as certifiable global
+subset-selection problems over candidate calibration data.
+
+Another growing research direction is deep learning-based calibration,
+especially for targetless, online, or weakly supervised settings.
+Methods such as RegNet, CalibNet, and LCCNet reduce manual effort and can
+directly predict extrinsic corrections from multimodal data
+\citep{schneider2017regnet,iyer2018calibnet,lv2021lccnet}.
+More recent work continues to improve automation and online refinement
+\citep{liao2023survey,huang2025whatmatters}.
+At the same time, recent survey and critique papers note persistent challenges
+in robustness, generalization, and consistent evaluation across sensor types,
+scenes, and camera models \citep{liao2023survey,huang2025whatmatters}.
+As a result, classical geometric pipelines remain the dominant choice in
+precision-oriented robotic systems, even as learning-based methods continue
+to broaden the scope of what can be automated.
+
+In this paper, we cast calibration data collection as a certifiable
+experimental design problem.
+Rather than treating calibration purely as a downstream estimation task, we
+formulate the selection of calibration views, poses, or motion segments as a
+subset selection problem over candidate measurements.
+Our objective is to strengthen the weakest observable directions of the
+calibration parameter space through an E-optimal design criterion, and to
+complement greedy selection with convex relaxation-based post-hoc verification.
+This yields a principled framework for collecting calibration data that is
+not only informative in practice, but certifiably informative under the
+adopted information model.
+
+The main contributions of this framing are:
+\begin{enumerate}[leftmargin=1.5em]
+    \item We position robotic calibration as a data design problem, not only
+    as a downstream estimation problem.
+    \item We connect calibration data selection to information-theoretic
+    subset selection with emphasis on the weakest observable directions
+    through E-optimality.
+    \item We bridge active calibration with certifiable design by importing
+    the greedy-plus-verification viewpoint from recent certifiable selection
+    literature.
+\end{enumerate}
+
+% -------------------------------------------------------
+\section{Related Work}
+
+\subsection{Classical Calibration Backends}
+Classical calibration methods estimate sensor intrinsics, extrinsics, and
+timing parameters from a collected dataset.
+Zhang's planar-pattern method remains a foundational reference for practical
+camera calibration because it combines a closed-form initialization with
+nonlinear refinement under a maximum-likelihood objective
+\citep{zhang2000flexible}.
+In robotics, Kalibr has become one of the most widely used practical backends
+for multi-camera and visual-inertial calibration, supporting spatial and
+temporal calibration together with rich camera model support
+\citep{furgale2013kalibr,kalibr_toolbox}.
+These methods are highly effective at estimation, but they primarily operate
+on data that has already been collected.
+Consequently, they do not directly answer the upstream question of how to
+collect a calibration dataset that is certifiably informative.
+
+\subsection{Self-Calibration, Observability, and Informative Data Selection}
+A second line of work studies calibration through the lens of observability
+and information content.
+Maye et al.\ introduced a generic self-supervised calibration framework that
+used information-theoretic measures to identify and retain novel measurement
+sequences while handling unobservable directions explicitly
+\citep{maye2013self}.
+Schneider et al.\ later showed that visual-inertial self-calibration can be
+posed as a segment-based problem over a small subset of informative motion
+segments, yielding accuracy comparable to full-batch approaches at much lower
+computational cost \citep{schneider2017informative}.
+Their subsequent observability-aware work further emphasized that calibration
+quality depends strongly on motion excitation and proposed information metrics
+to assess which trajectory segments are worth retaining for calibration
+\citep{schneider2019observability}.
+Related work in online visual-inertial self-calibration provides a more
+complete observability analysis and identifies degenerate motion primitives
+that render subsets of calibration parameters unobservable
+\citep{yang2023online}.
+This literature strongly supports the premise that calibration failure is
+often caused by weak observability and poor excitation, not merely by the
+optimizer.
+
+\subsection{Guided Capture, Next-Best-View, and Active Calibration}
+Another closely related direction explicitly guides the collection process.
+AprilCal introduced an assisted and repeatable camera calibration workflow
+aimed at reducing reliance on operator intuition by suggesting improved
+target placements and providing intuitive uncertainty summaries
+\citep{richardson2013aprilcal}.
+Calibration Wizard pushed this idea further by computing, from previously
+acquired images, the next pose expected to yield the largest reduction in
+intrinsic uncertainty while also accounting for corner-detection uncertainty
+\citep{peng2019calibration}.
+Additional work on efficient pose selection, next-best-view selection for
+robot eye-in-hand calibration, and observability-aware active trajectory
+optimization continues this trend
+\citep{rojtberg2018efficient,yang2023nbv,wang2025active}.
+These methods show that active calibration can significantly reduce the number
+of required views or improve parameter uncertainty.
+However, they are usually formulated as sequential guidance or local planning
+procedures and do not provide a certificate that the final selected
+calibration set is globally optimal or near-optimal under a global
+subset-selection objective.
+
+\subsection{Information-Theoretic Online Calibration}
+Information-theoretic calibration ideas have also been explored in online and
+multi-camera settings.
+Dexheimer et al.\ developed an information-theoretic framework for online
+multi-camera extrinsic calibration that used entropy-based keyframe selection
+and segment evaluation to keep the estimation problem tractable
+\citep{dexheimer2022information}.
+These methods are conceptually close to the present viewpoint because they
+explicitly distinguish informative from redundant data.
+Nevertheless, they typically use heuristics such as entropy or keyframe
+scoring rather than a certifiable E-optimal subset-selection formulation over
+candidate calibration measurements.
+
+\subsection{Certifiable Calibration Solvers}
+There is also a growing literature on certifiable calibration solvers.
+Giamou et al.\ formulated extrinsic calibration from per-sensor egomotion as
+a quadratically constrained quadratic program and solved it via semidefinite
+relaxation to obtain certifiably globally optimal estimates
+\citep{giamou2019certifiable}.
+Follow-on work extended this line to online-capable variants and related
+hand-eye settings.
+This literature is highly relevant conceptually, but its certification target
+is different from ours: these methods certify the solution of a fixed
+calibration estimation problem, whereas our goal is to certify the
+informativeness of the selected dataset itself.
+In other words, certifiable solver work addresses \emph{how to solve} the
+posed calibration problem globally, while our framing addresses \emph{how to
+collect} data that makes calibration well-conditioned in the first place.
+
+\subsection{Targetless Geometric Calibration}
+Targetless geometric calibration provides another important neighboring
+direction, especially for cross-sensor calibration.
+A classical example is the mutual-information-based LiDAR--camera calibration
+method of Pandey et al., which aligns sensor observations without fiducial
+targets and even reports a Cram\'er--Rao lower bound analysis
+\citep{pandey2015mutual}.
+This line of work demonstrates that calibration can be carried out directly
+from natural scenes, making in-situ recalibration practical.
+Yet these methods still optimize a registration objective over the data at
+hand; they typically do not ask whether the selected data is globally optimal
+under a calibration-specific experimental design objective.
+
+\subsection{Learning-Based Calibration}
+A final major direction is learning-based calibration.
+Early milestones such as RegNet cast multimodal registration as direct deep
+regression of the six-degree-of-freedom extrinsic transform
+\citep{schneider2017regnet}, while CalibNet introduced self-supervised
+geometric training without direct supervision on the calibration parameters
+\citep{iyer2018calibnet}.
+LCCNet later improved online LiDAR--camera self-calibration by exploiting
+cost-volume style feature matching and iterative refinement \citep{lv2021lccnet}.
+More recent surveys show that learning-based calibration has expanded
+substantially across standard camera calibration, distortion estimation,
+cross-view calibration, and cross-sensor calibration \citep{liao2023survey}.
+At the same time, recent critique work argues that many regression-style
+LiDAR--camera calibration networks still struggle in complex real scenes
+\citep{huang2025whatmatters}.
+For this reason, learning-based calibration is best viewed as complementary
+to, rather than a replacement for, high-accuracy geometric calibration.
+Most importantly for our setting, these methods improve automation and
+targetless operation, but they generally do not certify observability or
+the informativeness of the collected data.
+
+\subsection{Relation to OASIS}
+The work most closely aligned with our certifiable-design perspective is
+OASIS, which formulates sensor arrangement for SLAM as a subset selection
+problem under an E-optimality criterion and combines greedy selection with
+convex-relaxation-based post-hoc verification \citep{kaveti2023oasis}.
+OASIS shows that robotics design problems can be treated as
+information-theoretic subset selection problems with meaningful certificates.
+Our work borrows that conceptual template, but shifts the focus from sensor
+arrangement for SLAM to the selection of informative views, poses, or motion
+segments for calibration.
+Thus, unlike Kalibr-style pipelines that estimate from a fixed dataset,
+unlike AprilCal- and Calibration-Wizard-style methods that guide data
+acquisition sequentially, and unlike certifiable solver approaches that
+certify only the downstream optimizer, our goal is to certify the
+informativeness of calibration data itself.
+
+% -------------------------------------------------------
+\section{Problem Statement}
+
+In this section, we formulate calibration data collection as a subset
+selection problem over a finite set of candidate measurements.
+Our goal is to select a fixed-budget subset of calibration views, poses, or
+motion segments that yields the most informative estimation problem for the
+calibration parameters of interest.
+
+\subsection{Parameterizing the Calibration Design Space}
+
+Let
+\begin{equation}
+\mathcal{C} = \{c_1, c_2, \dots, c_N\}
+\end{equation}
+denote a finite set of $N$ candidate calibration data units, where each
+candidate $c_i$ may represent a camera view, a robot pose, a trajectory
+segment, or a batch of measurements.
+We represent a selection by a binary vector $u \in \{0,1\}^N$.
+
+\subsection{Calibration Likelihood Under a Selected Dataset}
+
+Let $\theta \in \mathbb{R}^p$ denote the calibration parameters of interest
+and $\eta$ any nuisance variables (target poses, robot poses, etc.).
+For a selected subset $u$, the joint likelihood is
+\begin{equation}
+p(Z \mid \theta,\eta;u)
+= \prod_{i=1}^{N} p_i(z_i \mid \theta,\eta)^{u_i}.
+\end{equation}
+The maximum-likelihood calibration estimate is
+\begin{equation}
+(\hat{\theta}(u),\hat{\eta}(u))
+= \arg\min_{\theta,\eta} \sum_{i=1}^{N} u_i \, \ell_i(\theta,\eta),
+\quad
+\ell_i := -\log p_i(z_i \mid \theta,\eta).
+\end{equation}
+
+\subsection{Fisher Information and Marginal Calibration Information}
+
+The Fisher information of candidate $c_i$ is
+\begin{equation}
+\mathcal I_i(\theta,\eta)
+:= \mathbb E_{z_i}\!\left[-\nabla^2_{\theta,\eta}\log p_i\right],
+\end{equation}
+and the total FIM for a selection $u$ is additive:
+$\mathcal I(\theta,\eta;u) = \sum_{i} u_i \mathcal I_i(\theta,\eta)$.
+
+Partitioning into calibration parameters $\theta$ and nuisance $\eta$:
+\begin{equation}
+\mathcal I(u) =
+\begin{bmatrix}
+\mathcal I_{\theta\theta}(u) & \mathcal I_{\theta\eta}(u) \\
+\mathcal I_{\eta\theta}(u) & \mathcal I_{\eta\eta}(u)
+\end{bmatrix},
+\end{equation}
+the marginal calibration information matrix is the Schur complement
+\begin{equation}
+\widetilde{\mathcal I}_{\theta}(u)
+= \mathcal I_{\theta\theta}(u)
+- \mathcal I_{\theta\eta}(u)\,\mathcal I_{\eta\eta}(u)^{-1}\,\mathcal I_{\eta\theta}(u).
+\label{eq:schur}
+\end{equation}
+Because the nuisance block $\mathcal I_{\eta\eta}$ is block-diagonal (each
+candidate contributes an independent $6\times6$ pose block),
+$\mathcal I_{\eta\eta}^{-1}$ costs $O(N \cdot 6^3)$---a cheap per-block
+inversion---yielding a compact $p\times p$ matrix regardless of $N$.
+
+\subsection{E-Optimal Calibration Data Selection}
+
+The Cram\'er--Rao bound implies that the covariance of any unbiased estimator
+is at least $\widetilde{\mathcal I}_{\theta}^{-1}$.
+To strengthen the weakest observable direction we adopt the E-optimality
+criterion:
+\begin{equation}
+\max_{u \in \{0,1\}^N,\;\mathbf{1}^\top u = K}
+\;\lambda_{\min}\!\bigl(\widetilde{\mathcal I}_{\theta}(u)\bigr).
+\label{eq:e_opt}
+\end{equation}
+This formulation turns calibration into an information-driven design problem:
+rather than assuming all measurements are equally useful, we seek the subset
+that provides the strongest worst-case observability.
+
+% -------------------------------------------------------
+\section{Experimental Design}
+\label{sec:experiments}
+
+We evaluate the proposed calibration data selection framework along four axes:
+(i)~whether selected subsets improve calibration accuracy relative to
+standard baselines,
+(ii)~whether the E-optimal objective correlates with empirical estimation
+quality,
+(iii)~whether the method remains effective under weakly observable or
+degenerate data regimes, and
+(iv)~whether the post-hoc verification procedure provides meaningful
+certificates on subset quality.
+Since our goal is to study \emph{data design} rather than propose a new
+calibration solver, all competing subset-selection methods are evaluated
+using the same downstream calibration backend.
+
+\subsection{Baselines}
+
+We compare the following five methods:
+\begin{enumerate}[leftmargin=1.5em]
+    \item \textbf{Random:} uniform random $K$-subset (25 independent trials;
+    mean reported).
+    \item \textbf{Coverage:} greedy farthest-point sampling on camera
+    translations in 3-D space.
+    \item \textbf{Motion-diversity:} greedy farthest-point sampling on SO(3)
+    rotations via geodesic distance.
+    \item \textbf{Greedy-E:} greedy maximization of
+    $\lambda_{\min}(\widetilde{\mathcal I}_{\theta})$.
+    \item \textbf{FW-E (proposed):} Frank-Wolfe continuous relaxation of
+    \eqref{eq:e_opt}, rounded to a binary solution; the FW duality gap
+    provides a post-hoc certificate.
+\end{enumerate}
+
+\subsection{Metrics}
+
+\paragraph{Information quality.}
+$\lambda_{\min}(\widetilde{\mathcal I}_{\theta})$ (E-optimality, $\uparrow$).
+
+\paragraph{Calibration quality.}
+Because a single $\ell_2$ norm mixes parameters with different units and
+physical interpretations, we decompose calibration error into three
+physically interpretable groups:
+\begin{itemize}[leftmargin=1.5em]
+  \item $\epsilon_f$ \textbf{(focal-length error, px)}: $\sqrt{(\hat{f}_x - f_x^*)^2 + (\hat{f}_y - f_y^*)^2}$, measuring how well the image scale is recovered.
+  \item $\epsilon_{pp}$ \textbf{(principal-point error, px)}: $\sqrt{(\hat{c}_x - c_x^*)^2 + (\hat{c}_y - c_y^*)^2}$, measuring optical-axis centering.
+  \item $\epsilon_d$ \textbf{(distortion error, unitless)}: $\|\hat{\mathbf{d}} - \mathbf{d}^*\|_2$ where $\mathbf{d} = [k_1, k_2, p_1, p_2, k_3]^\top$, measuring lens-model accuracy.
+\end{itemize}
+\textbf{Train-RMS}: reprojection RMS on selected $K$ views (px).
+\textbf{Held-out RMS}: mean per-point reprojection error on the remaining
+$N-K$ views evaluated with estimated intrinsics and ground-truth poses (px).
+
+\subsection{Setup}
+
+All experiments use a pool of $N = 720$ candidate camera poses generated in
+NVIDIA Isaac Sim around a fixed calibration target, with budget $K = 20$.
+Both targets are imaged with the \emph{same} normal-FOV pinhole camera
+($f_x = f_y = 1{,}649$~px, $c_x{=}960$, $c_y{=}540$, hFOV~${\approx}60^\circ$,
+$1920\times1080$, zero distortion ground truth) to ensure a fair comparison.
+Two calibration targets are studied, matched in corner count and physical extent
+to enable fair cross-target comparisons:
+\begin{itemize}
+    \item \textbf{AprilGrid}: $6{\times}6$ tag grid (144 outer-corner points per
+    view, $12{\times}12$ layout, 4.22\,cm pitch, $46.4{\times}46.4$\,cm corner span).
+    \item \textbf{Matched ChArUco}: $13{\times}13$ square board (144 inner-corner points per
+    view, $12{\times}12$ layout, 4.22\,cm pitch, $46.4{\times}46.4$\,cm corner span).
+\end{itemize}
+Both targets have identical corner count (144), pitch (4.22\,cm), and
+$46.4\times46.4$\,cm corner span, enabling unconfounded cross-target comparison.
+Both boards are generated analytically using the same camera parameters and
+hemisphere geometry; noise is added as i.i.d.\ Gaussian per corner per view.
+Three noise levels are evaluated: near-noiseless ($\sigma = 0.01$~px),
+realistic ($\sigma = 0.5$~px), and high noise ($\sigma = 1.0$~px).
+Distortion robustness experiments additionally apply medium and high
+Brown--Conrady distortion (Section~\ref{subsec:distortion}).
+The downstream calibration backend is \texttt{cv2.calibrateCamera} (OpenCV
+Zhang-style) with a neutral focal-length initialization
+$f_0 = 0.7\max(w,h)$ to avoid sensitivity to a bad starting point.
+
+% -------------------------------------------------------
+\subsection{Main Results: Fixed-Budget Subset Comparison}
+\label{subsec:fixed_backend}
+
+Tables~\ref{tab:aprilgrid_noiseless}--\ref{tab:charuco_sigma10} report the
+five-method head-to-head comparison on both targets under three noise levels
+($\sigma \in \{0,\,0.5,\,1.0\}$~px for AprilGrid; $\sigma{=}0.01$~px used
+as near-noiseless for ChArUco).
+All methods share the same candidate pool ($N{=}720$) and downstream
+calibration backend; only the selected $K{=}20$ views differ.
+
+\begin{table}[ht]
+\centering
+\setlength{\tabcolsep}{4pt}
+\caption{AprilGrid, noiseless ($\sigma{\approx}0$\,px). $N{=}720$, $K{=}20$.
+Focal/PP errors in pixels, distortion error unitless.
+Random: mean over 25 trials. Bold: best E-optimal method (FW-E or Greedy-E).}
+\label{tab:aprilgrid_noiseless}
+\begin{tabular}{lrrrrrr}
+\toprule
+Method & $\lambda_{\min}$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
+\midrule
+\textbf{FW-E}     & $\mathbf{2.18\!\times\!10^{3}}$ & $\mathbf{4.11\!\times\!10^{-3}}$ & $1.88\!\times\!10^{-2}$ & $\mathbf{2.01\!\times\!10^{-4}}$ & $\mathbf{1.40\!\times\!10^{-2}}$ & $2.31\!\times\!10^{-2}$ \\
+\textbf{Greedy-E} & $2.09\!\times\!10^{3}$ & $5.07\!\times\!10^{-3}$ & $\mathbf{1.51\!\times\!10^{-2}}$ & $6.00\!\times\!10^{-4}$ & $1.41\!\times\!10^{-2}$ & $\mathbf{1.98\!\times\!10^{-2}}$ \\
+Random (mean)     & $892$ & $1.38\!\times\!10^{-2}$ & $2.17\!\times\!10^{-2}$ & $7.16\!\times\!10^{-4}$ & $1.39\!\times\!10^{-2}$ & $2.51\!\times\!10^{-2}$ \\
+Coverage          & $761$ & $5.67\!\times\!10^{-3}$ & $3.13\!\times\!10^{-2}$ & $5.71\!\times\!10^{-4}$ & $1.40\!\times\!10^{-2}$ & $3.42\!\times\!10^{-2}$ \\
+Motion-div.       & $663$ & $1.10\!\times\!10^{-2}$ & $2.47\!\times\!10^{-2}$ & $1.70\!\times\!10^{-4}$ & $1.38\!\times\!10^{-2}$ & $2.80\!\times\!10^{-2}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\setlength{\tabcolsep}{4pt}
+\caption{Matched ChArUco board ($13{\times}13$, 144\,pts, 46\,cm), near-noiseless ($\sigma{=}0.01$\,px). $N{=}720$, $K{=}20$.
+Focal/PP errors in pixels, distortion error unitless. Bold: best E-optimal method (FW-E or Greedy-E).}
+\label{tab:charuco_noiseless}
+\begin{tabular}{lrrrrrr}
+\toprule
+Method & $\lambda_{\min}$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
+\midrule
+FW-E              & $1.94\!\times\!10^{3}$ & $\mathbf{5.88\!\times\!10^{-3}}$ & $2.16\!\times\!10^{-2}$ & $1.63\!\times\!10^{-4}$ & $\mathbf{1.39\!\times\!10^{-2}}$ & $2.52\!\times\!10^{-2}$ \\
+\textbf{Greedy-E} & $\mathbf{2.04\!\times\!10^{3}}$ & $8.43\!\times\!10^{-3}$ & $\mathbf{1.82\!\times\!10^{-2}}$ & $\mathbf{2.51\!\times\!10^{-5}}$ & $1.41\!\times\!10^{-2}$ & $\mathbf{2.25\!\times\!10^{-2}}$ \\
+Random (mean)     & $885$ & $8.81\!\times\!10^{-3}$ & $1.41\!\times\!10^{-2}$ & $5.26\!\times\!10^{-4}$ & $1.36\!\times\!10^{-2}$ & $1.80\!\times\!10^{-2}$ \\
+Coverage          & $715$ & $2.17\!\times\!10^{-2}$ & $4.92\!\times\!10^{-2}$ & $7.13\!\times\!10^{-4}$ & $1.38\!\times\!10^{-2}$ & $5.25\!\times\!10^{-2}$ \\
+Motion-div.       & $592$ & $2.20\!\times\!10^{-2}$ & $6.12\!\times\!10^{-2}$ & $6.43\!\times\!10^{-4}$ & $1.40\!\times\!10^{-2}$ & $6.28\!\times\!10^{-2}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\setlength{\tabcolsep}{4pt}
+\caption{AprilGrid, realistic noise ($\sigma{=}0.5$~px). $N{=}720$, $K{=}20$.
+Focal/PP errors in pixels, distortion error unitless. Bold: best E-optimal method (FW-E or Greedy-E).}
+\label{tab:aprilgrid_sigma05}
+\begin{tabular}{lrrrrrr}
+\toprule
+Method & $\lambda_{\min}$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
+\midrule
+\textbf{FW-E}     & $\mathbf{0.874}$ & $0.203$ & $0.648$ & $0.0117$ & $\mathbf{0.695}$ & $0.904$ \\
+\textbf{Greedy-E} & $0.842$ & $\mathbf{0.150}$ & $\mathbf{0.530}$ & $\mathbf{3.43\!\times\!10^{-3}}$ & $0.696$ & $\mathbf{0.830}$ \\
+Random (mean)     & $0.359$ & $0.691$ & $1.066$ & $0.0358$ & $0.695$ & $1.237$ \\
+Coverage          & $0.307$ & $0.278$ & $1.586$ & $0.0299$ & $0.702$ & $1.733$ \\
+Motion-div.       & $0.268$ & $0.548$ & $1.244$ & $8.43\!\times\!10^{-3}$ & $0.691$ & $1.408$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\setlength{\tabcolsep}{4pt}
+\caption{Matched ChArUco board ($13{\times}13$, 144\,pts, 46\,cm), realistic noise ($\sigma{=}0.5$~px). $N{=}720$, $K{=}20$.
+Focal/PP errors in pixels, distortion error unitless. Bold: best E-optimal method (FW-E or Greedy-E).}
+\label{tab:charuco_sigma05}
+\begin{tabular}{lrrrrrr}
+\toprule
+Method & $\lambda_{\min}$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
+\midrule
+FW-E              & $0.778$ & $\mathbf{0.293}$ & $\mathbf{1.089}$ & $8.81\!\times\!10^{-3}$ & $\mathbf{0.695}$ & $\mathbf{1.271}$ \\
+\textbf{Greedy-E} & $\mathbf{0.809}$ & $0.424$ & $1.316$ & $\mathbf{5.01\!\times\!10^{-3}}$ & $0.700$ & $1.529$ \\
+Random (mean)     & $0.356$ & $0.434$ & $0.698$ & $0.0259$ & $0.681$ & $0.898$ \\
+Coverage          & $0.288$ & $1.077$ & $2.458$ & $0.0358$ & $0.692$ & $2.628$ \\
+Motion-div.       & $0.239$ & $1.112$ & $3.104$ & $0.0328$ & $0.698$ & $3.183$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\setlength{\tabcolsep}{4pt}
+\caption{AprilGrid, $\sigma{=}1.0$~px noise. $N{=}720$, $K{=}20$.
+Focal/PP errors in pixels, distortion error unitless. Bold: best E-optimal method (FW-E or Greedy-E).}
+\label{tab:aprilgrid_sigma10}
+\begin{tabular}{lrrrrrr}
+\toprule
+Method & $\lambda_{\min}$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
+\midrule
+\textbf{FW-E}     & $\mathbf{0.220}$ & $0.559$ & $1.994$ & $\mathbf{0.0364}$ & $\mathbf{1.398}$ & $2.404$ \\
+\textbf{Greedy-E} & $0.217$ & $\mathbf{0.260}$ & $\mathbf{1.476}$ & $0.0526$ & $1.409$ & $\mathbf{2.002}$ \\
+Random (mean)     & $0.0914$ & $1.377$ & $2.105$ & $0.0712$ & $1.390$ & $2.450$ \\
+Coverage          & $0.0784$ & $0.551$ & $3.232$ & $0.0621$ & $1.405$ & $3.528$ \\
+Motion-div.       & $0.0683$ & $1.093$ & $2.491$ & $0.0167$ & $1.383$ & $2.819$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\setlength{\tabcolsep}{4pt}
+\caption{Matched ChArUco board ($13{\times}13$, 144\,pts, 46\,cm), $\sigma{=}1.0$~px noise. $N{=}720$, $K{=}20$.
+Focal/PP errors in pixels, distortion error unitless. Bold: best E-optimal method (FW-E or Greedy-E); FW-E collapses at this setting.}
+\label{tab:charuco_sigma10}
+\begin{tabular}{lrrrrrr}
+\toprule
+Method & $\lambda_{\min}$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
+\midrule
+FW-E              & $1.84\!\times\!10^{-2}$ & $8.34$ & $10.79$ & $0.0471$ & $\mathbf{1.382}$ & $10.52$ \\
+\textbf{Greedy-E} & $\mathbf{0.204}$ & $\mathbf{0.944}$ & $\mathbf{3.243}$ & $\mathbf{0.0327}$ & $\mathbf{1.382}$ & $\mathbf{3.668}$ \\
+Random (mean)     & $0.0907$ & $0.865$ & $1.392$ & $0.0516$ & $1.363$ & $1.792$ \\
+Coverage          & $0.0738$ & $2.141$ & $4.913$ & $0.0716$ & $1.385$ & $5.256$ \\
+Motion-div.       & $0.0614$ & $2.246$ & $6.261$ & $0.0673$ & $1.395$ & $6.417$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{FIM methods substantially outperform geometric heuristics on AprilGrid.}
+At $\sigma{=}0.5$\,px on AprilGrid (Table~\ref{tab:aprilgrid_sigma05}),
+Greedy-E achieves the best $\epsilon_f{=}0.150$\,px, $\epsilon_{pp}{=}0.530$\,px,
+and held-out RMS $0.830$\,px---improvements of $4.6{\times}$, $2.0{\times}$,
+and $1.5{\times}$ over Random ($0.691$\,px, $1.066$\,px, $1.237$\,px).
+FW-E leads $\lambda_{\min}$ ($0.874$ vs.\ Greedy-E $0.842$), confirming that
+the Frank-Wolfe relaxation correctly solves the E-optimal objective, though
+calibration quality favours the greedy discrete solution.
+Coverage and Motion-diversity consistently produce the worst calibration
+quality: held-out $1.733$ and $1.408$\,px respectively, confirming that
+translational or rotational diversity heuristics do not target the most
+informative views for intrinsic calibration.
+The same pattern holds at $\sigma{=}1.0$\,px (Table~\ref{tab:aprilgrid_sigma10}):
+Greedy-E wins $\epsilon_f$ ($0.260$\,px) and held-out RMS ($2.002$\,px)
+versus Random $2.450$\,px, Coverage $3.528$\,px, and Motion-diversity $2.819$\,px.
+
+\paragraph{ChArUco: Greedy-E is the recommended E-optimal method; FW-E collapses at high noise.}
+On matched ChArUco, Greedy-E consistently achieves the highest $\lambda_{\min}$
+($2$--$11{\times}$ above Random) and is the best-performing E-optimal method
+across all noise levels.
+At $\sigma{=}0.5$\,px (Table~\ref{tab:charuco_sigma05}), FW-E achieves the
+best $\epsilon_f{=}0.293$\,px and held-out $1.271$\,px among E-optimal methods,
+while Greedy-E leads $\lambda_{\min}$ ($0.809$) and $\epsilon_d$.
+At $\sigma{=}1.0$\,px (Table~\ref{tab:charuco_sigma10}), Greedy-E dominates
+all calibration metrics among E-optimal methods:
+$\epsilon_f{=}0.944$\,px, $\epsilon_{pp}{=}3.243$\,px, $\epsilon_d{=}0.0327$,
+and held-out $3.668$\,px.
+FW-E collapses at this setting due to the rounding failure described below
+($\lambda_{\min}{=}1.84{\times}10^{-2}$, $\epsilon_f{=}8.34$\,px).
+Note that Random's lower absolute calibration errors at high noise reflect
+ChArUco's more uniform inner-corner coverage incidentally constraining the
+principal-point axis; however, Random provides no information certificate,
+no $\lambda_{\min}$ guarantee, and is not a reliable strategy.
+Greedy-E is the clear recommendation on ChArUco.
+
+\paragraph{FW-E vs.\ Greedy-E: relaxation gap grows with noise.}
+At low noise, FW-E and Greedy-E perform comparably on AprilGrid, with FW-E
+winning $\lambda_{\min}$ and Greedy-E winning most calibration metrics.
+This decoupling arises from top-$K$ rounding: the Frank-Wolfe continuous
+solution is near-optimal for the relaxed objective, but rounding the
+fractional weights to the top-20 integer indices introduces a gap that grows
+as the information landscape becomes flatter at higher noise.
+Greedy-E, which operates directly on discrete subsets at each step, avoids
+this gap and maintains consistent calibration accuracy across noise levels.
+
+\paragraph{FW-E collapses at high noise on ChArUco.}
+At $\sigma{=}1.0$\,px on matched ChArUco (Table~\ref{tab:charuco_sigma10}),
+FW-E collapses catastrophically: $\lambda_{\min}$ drops to
+$1.84\!\times\!10^{-2}$ (an $11{\times}$ gap below Greedy-E's $0.204$),
+$\epsilon_f$ rises to $8.34$\,px, and held-out RMS reaches $10.52$\,px---far
+exceeding every other method including Random ($1.792$\,px).
+The mechanism is the same rounding failure: the high-noise information
+landscape is nearly flat, the continuous relaxation distributes weight
+uniformly across candidates, and top-$K$ rounding assembles a near-random
+set with low information content.
+The FW duality gap certificate still closes (the relaxed problem converged),
+but it no longer certifies the quality of the rounded discrete solution.
+
+\paragraph{Train-RMS is not a reliable quality indicator.}
+Across all methods and both targets, train-RMS lies in a narrow band
+regardless of the wide variation in calibration errors.
+At $\sigma{=}0.5$\,px the band is $0.69$--$0.70$\,px for AprilGrid and
+$0.68$--$0.70$\,px for ChArUco; at $\sigma{=}1.0$\,px it is $1.36$--$1.41$\,px
+for both targets, even as FW-E on ChArUco collapses to $\epsilon_{pp}{=}10.79$\,px.
+Reprojection error on the training set is therefore an insufficient diagnostic
+for calibration quality; held-out error and $\lambda_{\min}$ are necessary.
+
+\paragraph{Coverage and Motion-diversity are consistently the weakest baselines.}
+On ChArUco $\sigma{=}1.0$ (Table~\ref{tab:charuco_sigma10}), Motion-diversity
+yields held-out $6.417$\,px and Coverage $5.256$\,px---$1.7{\times}$ and
+$1.4{\times}$ worse than Greedy-E ($3.668$\,px) and $4.3{\times}$/$3.5{\times}$
+worse on $\lambda_{\min}$.
+On AprilGrid $\sigma{=}0.5$ (Table~\ref{tab:aprilgrid_sigma05}), Coverage
+held-out ($1.733$\,px) is $2.1{\times}$ worse than Greedy-E ($0.830$\,px).
+Maximising translational or rotational diversity does not maximise observability:
+views spread across SO(3) do not necessarily provide the joint image-plane
+coverage needed to constrain the full intrinsic parameter vector.
+
+% -------------------------------------------------------
+\subsection{FW-E Solver: Convergence and Runtime}
+\label{subsec:fw_convergence}
+
+The Frank-Wolfe continuous relaxation of~\eqref{eq:e_opt} exhibits strongly
+noise-dependent convergence (Table~\ref{tab:fw_convergence}).
+At low-to-moderate noise ($\sigma{\le}0.5$~px), FW wall-clock time is
+$1.9$--$2.4$~s.
+At high noise ($\sigma{=}1.0$~px), the information landscape is nearly flat
+and the duality gap closes early; rounding the near-uniform continuous solution
+degrades $\lambda_{\min}$ by $11\times$ on ChArUco
+($1.84\!\times\!10^{-2}$ vs.\ Greedy-E $0.204$), driving held-out RMS
+to $10.52$~px.
+Greedy-E takes $\approx\!3.8$--$4.1$~s ($O(NK)$ Schur complements),
+while geometric heuristics run in milliseconds.
+
+\begin{table}[ht]
+\centering
+\caption{FW-E convergence summary ($N{=}720$, $K{=}20$).
+Matched ChArUco uses $\sigma{=}0.01$\,px for the near-noiseless row.
+At $\sigma{=}1.0$\,px (both targets), the high-noise landscape is nearly flat
+and the duality gap closes early; rounding degrades $\lambda_{\min}$
+significantly on ChArUco ($1.84\!\times\!10^{-2}$ rounded vs.\ Greedy-E $0.204$)
+and $\epsilon_f$ rises to $8.34$\,px.}
+\label{tab:fw_convergence}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{llrrr}
+\toprule
+Target & $\sigma$ & Time (s) & Rounded $\lambda_{\min}$ & Held-out RMS\\
+\midrule
+ChArUco (matched) & 0.01 & 1.90 & $1.94\!\times\!10^{3}$  & $2.52\!\times\!10^{-2}$ \\
+ChArUco (matched) & 0.5  & 1.86 & $7.78\!\times\!10^{-1}$ & $1.271$ \\
+ChArUco (matched) & 1.0  & 1.20 & $1.84\!\times\!10^{-2}$ & $10.52$ \\
+AprilGrid         & 0    & 2.40 & $2.18\!\times\!10^{3}$  & $2.31\!\times\!10^{-2}$ \\
+AprilGrid         & 0.5  & 1.88 & $8.74\!\times\!10^{-1}$ & $0.904$ \\
+AprilGrid         & 1.0  & 1.62 & $2.20\!\times\!10^{-1}$ & $2.404$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A key implementation fix was replacing the Linear Minimization Oracle (LMO)
+from an LP solver (\texttt{scipy.linprog}) with a closed-form top-$K$
+selection.
+With FIM weights $\sim10^{18}$, the gradient magnitudes are $\sim10^{18}$,
+causing \texttt{linprog} to stall indefinitely.
+The LMO for the budget constraint $\sum u_i \leq K$, $u\in[0,1]^N$ has a
+closed-form solution --- pick the $K$ indices with the most negative gradient
+--- reducing per-iteration LMO cost from $O(N^3)$ (LP) to $O(N\log K)$.
+
+% -------------------------------------------------------
+\subsection{Correlation Between E-Optimality and Empirical Accuracy}
+\label{subsec:correlation}
+
+On AprilGrid $\sigma{=}0.5$, the ranking by $\lambda_{\min}$ reliably predicts
+the ranking by held-out RMS: FW-E and Greedy-E ($\lambda_{\min}{=}0.874$ and
+$0.842$) both achieve held-out RMS well below Random, Coverage, and
+Motion-diversity ($1.237$--$1.733$\,px, Table~\ref{tab:aprilgrid_sigma05}).
+On matched ChArUco, the E-optimal criterion continues to identify the best
+discrete calibration strategy: Greedy-E achieves the highest $\lambda_{\min}$
+at every noise level and is the top-performing E-optimal method on all
+calibration metrics.
+The absolute numbers on ChArUco are larger than AprilGrid because ChArUco's
+inner-corner geometry provides more uniform image-plane coverage; incidentally,
+Random's diverse sampling can better constrain the principal-point axis at high
+noise---but this is an artifact of geometry rather than a principled strategy,
+and Random carries no information certificate.
+At high noise on ChArUco, FW-E's rounding failure decouples the
+relaxed objective from the discrete solution ($\lambda_{\min}$ collapses
+$11{\times}$, held-out RMS rises to $10.52$\,px), while Greedy-E's
+direct discrete operation remains robust.
+These results confirm Greedy-E as the recommended method on ChArUco and
+motivate developing more robust rounding strategies for FW-E as future work.
+
+% -------------------------------------------------------
+\subsection{Distortion Robustness}
+\label{subsec:distortion}
+
+To test whether method rankings hold under lens distortion, we generated four
+additional datasets using the same hemisphere geometry ($N{=}720$, $K{=}20$)
+but with Brown--Conrady distortion coefficients applied analytically:
+medium distortion ($k_1{=}{-}0.15$, $k_2{=}0.05$, $p_1{=}0.001$, $p_2{=}0.001$)
+and high distortion ($k_1{=}{-}0.35$, $k_2{=}0.15$, $p_1{=}0.002$, $p_2{=}0.002$),
+each for both targets.
+Table~\ref{tab:distortion_medium} reports $\lambda_{\min}$ for the three methods;
+Table~\ref{tab:distortion_high} reports the high-distortion results.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Medium distortion ($k_1{=}{-}0.15$, $k_2{=}0.05$, $p_1{=}p_2{=}0.001$).
+$\lambda_{\min}(H_{\rm cal})$, $N{=}720$, $K{=}20$.
+Bold: best per column within each target.}
+\label{tab:distortion_medium}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+ & \multicolumn{3}{c}{AprilGrid} & \multicolumn{3}{c}{Matched ChArUco} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Method & $\sigma{\approx}0$ & $\sigma{=}0.5$ & $\sigma{=}1.0$ & $\sigma{=}0.01$ & $\sigma{=}0.5$ & $\sigma{=}1.0$ \\
+\midrule
+FW-E     & $\mathbf{2.41\!\times\!10^{3}}$ & $\mathbf{0.965}$ & $\mathbf{0.241}$ & $\mathbf{2.23\!\times\!10^{3}}$ & $\mathbf{0.899}$ & $\mathbf{0.225}$ \\
+Greedy-E & $\mathbf{2.41\!\times\!10^{3}}$ & $0.926$ & $0.240$ & $2.17\!\times\!10^{3}$ & $0.865$ & $0.217$ \\
+Random   & $937$ & $0.377$ & $0.096$ & $947$ & $0.381$ & $0.097$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\small
+\caption{High distortion ($k_1{=}{-}0.35$, $k_2{=}0.15$, $p_1{=}p_2{=}0.002$).
+$\lambda_{\min}(H_{\rm cal})$, $N{=}720$, $K{=}20$.
+${}^*$FW-E rounding failure.}
+\label{tab:distortion_high}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+ & \multicolumn{3}{c}{AprilGrid} & \multicolumn{3}{c}{Matched ChArUco} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Method & $\sigma{\approx}0$ & $\sigma{=}0.5$ & $\sigma{=}1.0$ & $\sigma{=}0.01$ & $\sigma{=}0.5$ & $\sigma{=}1.0$ \\
+\midrule
+FW-E     & $\mathbf{3.53\!\times\!10^{3}}$ & $0.348^*$ & $0.089^*$ & $\mathbf{3.34\!\times\!10^{3}}$ & $\mathbf{1.34}$ & $0.059^*$ \\
+Greedy-E & $3.48\!\times\!10^{3}$ & $\mathbf{1.39}$ & $\mathbf{0.349}$ & $3.31\!\times\!10^{3}$ & $1.32$ & $\mathbf{0.332}$ \\
+Random   & $1.35\!\times\!10^{3}$ & $0.543$ & $0.137$ & $1.42\!\times\!10^{3}$ & $0.568$ & $0.144$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Medium distortion leaves rankings intact.}
+Under medium distortion, FW-E wins $\lambda_{\min}$ on both targets at all
+noise levels, and the $2.5{\times}$ FW-E/Random gap in $\lambda_{\min}$ is
+preserved (Table~\ref{tab:distortion_medium}).
+The project\_points Jacobian correctly accounts for the Brown--Conrady model,
+so the FIM landscape shifts uniformly and optimal view placement remains
+stable.
+
+\paragraph{High distortion triggers FW-E rounding failure at moderate noise.}
+Under high distortion ($k_1{=}{-}0.35$), FW-E fails at $\sigma{=}0.5$\,px on
+AprilGrid ($\lambda_{\min}{=}0.348$ vs.\ Greedy-E $1.39$, a $4.0{\times}$ gap)
+and at $\sigma{=}1.0$\,px on both targets
+(AprilGrid: $0.089$ vs.\ $0.349$; ChArUco: $0.059$ vs.\ $0.332$).
+Strong barrel distortion concentrates feature detection near the optical axis,
+flattening the FIM landscape and triggering early rounding collapse even at
+moderate noise---an amplification of the same mechanism observed under zero
+distortion.
+Greedy-E is the most robust method: it wins $\lambda_{\min}$ at $\sigma{=}0.5$
+and $\sigma{=}1.0$ on both targets under high distortion and is the recommended
+selection strategy when significant lens distortion is expected.
+
+% -------------------------------------------------------
+\subsection{Ablation Studies}
+\label{subsec:ablations}
+
+\paragraph{FIM-based selection vs.\ geometric heuristics across noise regimes.}
+The advantage of E-optimal methods over geometric baselines is consistent on
+AprilGrid but target-dependent on ChArUco
+(Tables~\ref{tab:aprilgrid_noiseless}--\ref{tab:charuco_sigma10}):
+\begin{itemize}
+    \item \textbf{Near-noiseless:} FW-E wins $\lambda_{\min}$ on AprilGrid
+    ($2.18\!\times\!10^3$); Greedy-E wins $\lambda_{\min}$ on ChArUco
+    ($2.04\!\times\!10^3$) and $\epsilon_f$ ($5.88\!\times\!10^{-3}$\,px).
+    All methods are well-conditioned; calibration quality differences are
+    within solver-convergence noise.
+    \item \textbf{$\sigma{=}0.5$~px:} FW-E wins $\lambda_{\min}$ on AprilGrid
+    ($0.874$); Greedy-E leads calibration quality on AprilGrid
+    ($\epsilon_f{=}0.150$\,px, held-out $0.830$\,px).
+    On ChArUco, Random unexpectedly beats both FIM methods on held-out RMS
+    ($0.898$\,px vs.\ FW-E $1.271$, Greedy-E $1.529$) and $\epsilon_{pp}$
+    ($0.698$\,px vs.\ Greedy-E $1.316$\,px).
+    \item \textbf{$\sigma{=}1.0$~px:} Greedy-E wins $\epsilon_f$ ($0.260$\,px)
+    and held-out RMS ($2.002$\,px) on AprilGrid.
+    On ChArUco, Random wins all calibration metrics while FW-E collapses
+    ($\lambda_{\min}$ drops $11{\times}$, held-out $10.52$\,px).
+\end{itemize}
+
+\paragraph{Target type.}
+Both targets are matched in corner count, pitch, and physical extent
+(Section~\ref{sec:experiments}), so cross-target comparisons isolate
+target geometry (inner-corner vs.\ outer-corner) from board size effects.
+AprilGrid consistently achieves lower held-out RMS than matched ChArUco with
+the best FIM method at each noise level: near-noiseless
+($1.98\!\times\!10^{-2}$\,px vs.\ $2.25\!\times\!10^{-2}$\,px),
+$\sigma{=}0.5$\,px ($0.830$\,px vs.\ $1.271$\,px on FW-E),
+and $\sigma{=}1.0$\,px ($2.002$\,px vs.\ $3.668$\,px on Greedy-E).
+The outer-corner layout of AprilGrid tags is more precisely localizable in
+the projection model, yielding a better-conditioned FIM that correctly
+guides view selection.
+On ChArUco, the inner-corner geometry provides more uniform image-plane corner
+sampling; the E-optimal criterion does not fully exploit this structure,
+allowing Random selection to match or beat FIM methods on held-out accuracy.
+
+\paragraph{Subset budget $K$.}
+Table~\ref{tab:k_sweep} reports $\lambda_{\min}(H_{\mathrm{cal}})$ for three
+methods across $K\in\{5,10,15,20,30,50,100,200\}$ on three
+configurations ($N{=}720$ throughout).
+
+\begin{table}[h]
+\centering
+\small
+\caption{$\lambda_{\min}(H_{\mathrm{cal}})$ vs.\ budget $K$.
+Top: ChArUco, $\sigma{=}0.5$\,px. Middle: AprilGrid, $\sigma{=}0.5$\,px.
+Bottom: AprilGrid, $\sigma{\approx}0$\,px (near-noiseless). $N{=}720$.
+Bold: best per column.
+${}^*$FW-E rounding failure (relaxation too diffuse at small $K$).}
+\label{tab:k_sweep}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+Method & $K{=}5$ & $K{=}10$ & $K{=}15$ & $K{=}20$ & $K{=}30$ & $K{=}50$ & $K{=}100$ & $K{=}200$ \\
+\midrule
+\multicolumn{9}{l}{\textit{ChArUco, $\sigma=0.5$\,px}} \\[2pt]
+Random   & $0.043$ & $0.122$ & $0.226$ & $0.354$ & $0.589$ & $0.906$ & $2.01$ & $4.03$ \\
+Greedy-E & $\mathbf{0.197}$ & $0.415$ & $\mathbf{0.613}$ & $\mathbf{0.809}$ & $\mathbf{1.18}$ & $1.88$ & $\mathbf{3.54}$ & $\mathbf{6.63}$ \\
+FW-E     & $0.002^*$ & $\mathbf{0.429}$ & $0.002^*$ & $0.778$ & $\mathbf{1.18}$ & $\mathbf{1.89}$ & $3.53$ & $\mathbf{6.63}$ \\
+\midrule
+\multicolumn{9}{l}{\textit{AprilGrid, $\sigma=0.5$\,px}} \\[2pt]
+Random   & $0.045$ & $0.123$ & $0.224$ & $0.346$ & $0.589$ & $0.884$ & $2.00$ & $4.14$ \\
+Greedy-E & $\mathbf{0.171}$ & $\mathbf{0.418}$ & $\mathbf{0.629}$ & $0.842$ & $1.25$ & $2.01$ & $3.74$ & $6.87$ \\
+FW-E     & $0.001^*$ & $0.073^*$ & $0.235$ & $\mathbf{0.874}$ & $\mathbf{1.27}$ & $\mathbf{2.02}$ & $\mathbf{3.76}$ & $\mathbf{6.88}$ \\
+\midrule
+\multicolumn{9}{l}{\textit{AprilGrid, $\sigma{\approx}0$\,px}} \\[2pt]
+Random   & $107$ & $301$ & $554$ & $859$ & $1.47\!\times\!10^{3}$ & $2.20\!\times\!10^{3}$ & $5.00\!\times\!10^{3}$ & $1.04\!\times\!10^{4}$ \\
+Greedy-E & $\mathbf{428}$ & $\mathbf{1.04\!\times\!10^{3}}$ & $1.56\!\times\!10^{3}$ & $2.09\!\times\!10^{3}$ & $3.11\!\times\!10^{3}$ & $5.01\!\times\!10^{3}$ & $9.35\!\times\!10^{3}$ & $\mathbf{1.72\!\times\!10^{4}}$ \\
+FW-E     & $0.001^*$ & $176$ & $\mathbf{1.62\!\times\!10^{3}}$ & $\mathbf{2.18\!\times\!10^{3}}$ & $\mathbf{3.17\!\times\!10^{3}}$ & $\mathbf{5.06\!\times\!10^{3}}$ & $\mathbf{9.38\!\times\!10^{3}}$ & $\mathbf{1.72\!\times\!10^{4}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Greedy-E is the most reliable method across budgets.}
+Greedy-E achieves the highest $\lambda_{\min}$ at $K{\le}15$ on both noisy
+configurations and at $K{=}5$--$10$ on noiseless AprilGrid, where FW-E's
+rounding fails.
+At $K{\ge}20$ on AprilGrid, FW-E recovers and slightly exceeds Greedy-E
+($0.874$ vs.\ $0.842$ at $K{=}20$, within $3.7\%$), and at large budgets the
+two methods converge to nearly identical $\lambda_{\min}$.
+Random uniformly underperforms both FIM methods across all tested budgets on
+all three configurations.
+
+\noindent\textbf{FW-E rounding instability at small $K$.}
+FW-E fails at small $K$ on all three configurations.
+On ChArUco $\sigma{=}0.5$, $\lambda_{\min}$ collapses to $0.002$ at $K{=}5$,
+$100{\times}$ below Greedy-E ($0.197$); the failure recurs at $K{=}15$.
+On AprilGrid $\sigma{=}0.5$, the failure persists through $K{=}10$
+(FW-E $0.073$ vs.\ Greedy-E $0.418$, a $5.7{\times}$ gap) before recovering
+at $K{\ge}15$.
+On near-noiseless AprilGrid, FW-E collapses at $K{=}5$ (${\approx}0.001$ vs.\
+Greedy-E $428$) and at $K{=}10$ ($176$ vs.\ Greedy-E $1040$), but leads from
+$K{\ge}15$ onward.
+At small $K$ ($K/N{\approx}0.007$--$0.021$), the initial uniform weights keep
+the continuous relaxation near-flat, and top-$K$ rounding assembles a poor
+discrete set; at $K{\ge}15$--$20$ the relaxation concentrates and rounding
+succeeds.
+
+\noindent\textbf{Diminishing returns.}
+The marginal gain in $\lambda_{\min}$ per additional pose decreases as $K$
+grows.
+On ChArUco $\sigma{=}0.5$, Greedy-E delivers $\lambda_{\min}{=}0.197$ at $K{=}5$
+but only ${\approx}0.010$ per additional pose in the $K{=}100\!\to\!200$ range
+---an $18{\times}$ drop in per-pose efficiency.
+The practical ``knee'' lies around $K{=}20$--$30$: beyond 30 frames, each
+additional view adds less than $2\%$ of the cumulative gain already achieved.
+
+% -------------------------------------------------------
+\subsection{Real-World Calibration Study}
+\label{subsec:real_world}
+
+We validate the proposed framework on real ChArUco captures collected using
+a live-demo rig (\texttt{live\_demo\_charuco/}).
+Starting from an over-complete capture session, each method selects $K{=}20$
+frames, and \texttt{cv2.calibrateCamera} is run on the selection.
+Because no ground-truth intrinsics are available, we report held-out
+reprojection error and cross-trial repeatability.
+Results to be included in the final paper.
+
+\printbibliography
+
+\end{document}
