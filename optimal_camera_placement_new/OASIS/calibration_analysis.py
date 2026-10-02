@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -36,7 +36,7 @@ def evaluate_selection(
         "max_eig": float(eigvals[-1]),
         "logdet": float(np.linalg.slogdet(h_cal + reg)[1]),
         "trace_cov": float(np.trace(cov)),
-        "cond": float(eigvals[-1] / max(eigvals[0], 1e-12)),
+        "cond": float(eigvals[-1] / max(abs(eigvals[0]), 1e-12)),
         "visible_points": float(visible_points),
     }
 
@@ -114,7 +114,7 @@ def before_after_calibration_summary(
 
 
 def intrinsic_parameter_labels(intrinsics_dim: int) -> List[str]:
-    default = ["fx", "fy", "cx", "cy"]
+    default = ["fx", "fy", "cx", "cy", "k1", "k2", "p1", "p2", "k3"]
     if intrinsics_dim <= len(default):
         return default[:intrinsics_dim]
     extra = [f"theta_{idx}" for idx in range(len(default), intrinsics_dim)]
@@ -151,6 +151,179 @@ def random_baseline_report(
         "best_indices": selections[best_idx],
         "trials": trials,
     }
+
+
+def calibrate_opencv(
+    problem: infmat.CalibrationProblem,
+    selected_indices: Sequence[int],
+) -> Tuple[Optional[np.ndarray], float]:
+    """Calibrate intrinsics with OpenCV on the selected subset.
+
+    Returns (intrinsics_9vec, train_rms) where intrinsics_9vec = [fx,fy,cx,cy,k1,k2,p1,p2,k3].
+    Returns (None, inf) if fewer than 3 views have valid measurements.
+    """
+    result = calibrate_opencv_full(problem, selected_indices)
+    if not result["success"]:
+        return None, float("inf")
+    return result["intrinsics"], result["train_rms"]
+
+
+def calibrate_opencv_full(
+    problem: infmat.CalibrationProblem,
+    selected_indices: Sequence[int],
+) -> dict:
+    """Calibrate intrinsics with OpenCV, returning poses and valid index list too.
+
+    Returns a dict with keys:
+      success      : bool
+      intrinsics   : ndarray [fx,fy,cx,cy,k1,k2,p1,p2,k3]
+      train_rms    : float (reprojection RMS on training views, px)
+      K_mat        : (3,3) camera matrix
+      dist         : (5,) distortion coefficients
+      rvecs        : list of (3,1) Rodrigues vectors (world-to-camera, one per view)
+      tvecs        : list of (3,1) translation vectors (world-to-camera, m)
+      valid_indices: list of candidate indices that were passed to cv2
+    """
+    import cv2
+
+    obj_points: List[np.ndarray] = []
+    img_points: List[np.ndarray] = []
+    valid_indices: List[int] = []
+    for idx in selected_indices:
+        meas = problem.measurements[int(idx)]
+        valid = ~np.any(np.isnan(meas), axis=1)
+        if valid.sum() < 4:
+            continue
+        obj_points.append(problem.target_points[valid].astype(np.float32))
+        img_points.append(meas[valid].astype(np.float32).reshape(-1, 1, 2))
+        valid_indices.append(int(idx))
+
+    if len(obj_points) < 3:
+        return {"success": False}
+
+    w, h = int(problem.image_size[0]), int(problem.image_size[1])
+    fx0 = float(max(w, h)) * 0.7
+    K_init = np.array([[fx0, 0.0, w / 2.0], [0.0, fx0, h / 2.0], [0.0, 0.0, 1.0]], dtype=np.float64)
+
+    try:
+        rms, K, dist, rvecs, tvecs = cv2.calibrateCamera(
+            obj_points, img_points, (w, h), K_init.copy(), None,
+            flags=cv2.CALIB_USE_INTRINSIC_GUESS,
+        )
+    except cv2.error:
+        return {"success": False}
+
+    d = dist.flatten()
+    while len(d) < 5:
+        d = np.append(d, 0.0)
+    intrinsics = np.array([K[0, 0], K[1, 1], K[0, 2], K[1, 2], d[0], d[1], d[2], d[3], d[4]])
+    return {
+        "success": True,
+        "intrinsics": intrinsics,
+        "train_rms": float(rms),
+        "K_mat": K,
+        "dist": d,
+        "rvecs": rvecs,
+        "tvecs": tvecs,
+        "valid_indices": valid_indices,
+    }
+
+
+def compute_groupwise_errors(
+    problem: infmat.CalibrationProblem,
+    intrinsics_est: np.ndarray,
+    valid_indices: Sequence[int],
+    rvecs: list,
+    tvecs: list,
+) -> dict:
+    """Compute physically interpretable group-wise calibration errors.
+
+    Returns:
+      focal_err_px  : L2 norm of (fx_err, fy_err) in pixels
+      pp_err_px     : L2 norm of (cx_err, cy_err) in pixels
+      dist_err      : L2 norm of distortion-coefficient vector error (unitless)
+      rot_err_deg   : mean geodesic rotation error over calibration poses (degrees)
+      trans_err_cm  : mean translation error over calibration poses (cm)
+    """
+    import cv2
+
+    gt = np.asarray(problem.intrinsics_gt, dtype=float)
+    est = intrinsics_est[: len(gt)]
+
+    focal_err = float(np.sqrt((est[0] - gt[0]) ** 2 + (est[1] - gt[1]) ** 2))
+    pp_err = float(np.sqrt((est[2] - gt[2]) ** 2 + (est[3] - gt[3]) ** 2))
+
+    if len(gt) >= 9:
+        dist_err = float(np.linalg.norm(est[4:9] - gt[4:9]))
+    elif len(gt) > 4:
+        dist_err = float(np.linalg.norm(est[4:] - gt[4:]))
+    else:
+        dist_err = float("nan")
+
+    rot_errors_deg: List[float] = []
+    trans_errors_cm: List[float] = []
+    for i, prob_idx in enumerate(valid_indices):
+        R_wc_gt = problem.candidate_rotations[int(prob_idx)]
+        t_wc_gt = problem.candidate_translations[int(prob_idx)]
+        R_cw_gt = R_wc_gt.T
+        t_cw_gt = (-R_cw_gt @ t_wc_gt).flatten()
+
+        R_est, _ = cv2.Rodrigues(rvecs[i])
+        t_est = tvecs[i].flatten()
+
+        # Geodesic rotation error
+        cos_angle = float(np.clip((np.trace(R_est @ R_cw_gt.T) - 1.0) / 2.0, -1.0, 1.0))
+        rot_errors_deg.append(float(np.degrees(np.arccos(cos_angle))))
+
+        # Translation error metres → cm
+        trans_errors_cm.append(float(np.linalg.norm(t_est - t_cw_gt) * 100.0))
+
+    param_err = float(np.sqrt(focal_err**2 + pp_err**2 + dist_err**2)) if np.isfinite(dist_err) else float("nan")
+
+    return {
+        "focal_err_px": focal_err,
+        "pp_err_px": pp_err,
+        "dist_err": dist_err,
+        "param_err": param_err,
+        "rot_err_deg": float(np.mean(rot_errors_deg)) if rot_errors_deg else float("nan"),
+        "trans_err_cm": float(np.mean(trans_errors_cm)) if trans_errors_cm else float("nan"),
+    }
+
+
+def heldout_reprojection_error(
+    problem: infmat.CalibrationProblem,
+    selected_indices: Sequence[int],
+    K_mat: np.ndarray,
+    dist_mat: np.ndarray,
+) -> float:
+    """Mean per-point reprojection error on poses NOT in selected_indices.
+
+    Uses the known candidate poses (R_wc, t_wc) from the problem — no PnP needed.
+    """
+    import cv2
+
+    selected_set = set(int(i) for i in selected_indices)
+    errors = []
+    for idx in range(problem.num_candidates):
+        if idx in selected_set:
+            continue
+        meas = problem.measurements[idx]              # (M, 2)
+        valid = ~np.any(np.isnan(meas), axis=1)
+        if valid.sum() < 4:
+            continue
+        obj_pts = problem.target_points[valid].astype(np.float32)
+        img_pts = meas[valid].astype(np.float32)
+
+        R_wc = problem.candidate_rotations[idx]
+        t_wc = problem.candidate_translations[idx]
+        R_cw = R_wc.T
+        t_cw = (-R_cw @ t_wc).reshape(3, 1)
+        rvec, _ = cv2.Rodrigues(R_cw)
+        projected, _ = cv2.projectPoints(obj_pts, rvec, t_cw, K_mat, dist_mat)
+        projected = projected.reshape(-1, 2)
+        errors.append(float(np.linalg.norm(projected - img_pts, axis=1).mean()))
+
+    return float(np.mean(errors)) if errors else float("inf")
 
 
 def compare_selected_vs_random(
