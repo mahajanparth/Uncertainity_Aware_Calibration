@@ -5,7 +5,13 @@ from typing import Sequence, Tuple
 
 import numpy as np
 
-from ..OASIS.FIM import CalibrationProblem, project_points
+from ..OASIS.FIM import (
+    CalibrationProblem,
+    default_intrinsics_init_offset,
+    default_intrinsics_vector,
+    project_points,
+    split_intrinsics,
+)
 
 
 def _normalize(vec: np.ndarray) -> np.ndarray:
@@ -226,7 +232,7 @@ def generate_structured_candidate_camera_bank(
     min_projected_corner_spread_px: float = 8.0,
 ) -> dict:
     if intrinsics is None:
-        intrinsics = np.array([820.0, 815.0, image_size[0] / 2.0, image_size[1] / 2.0], dtype=float)
+        intrinsics = default_intrinsics_vector(image_size)
     if target is None:
         target = np.zeros(3, dtype=float)
     if up is None:
@@ -374,7 +380,7 @@ def generate_random_candidate_camera_bank(
     seed: int = 0,
 ) -> dict:
     if intrinsics is None:
-        intrinsics = np.array([820.0, 815.0, image_size[0] / 2.0, image_size[1] / 2.0], dtype=float)
+        intrinsics = default_intrinsics_vector(image_size)
     if target is None:
         target = np.zeros(3, dtype=float)
     if up is None:
@@ -523,7 +529,7 @@ def build_camera_problem_from_candidate_bank(
     mask = bank["valid_mask"] if filtered_only else np.ones(bank["valid_mask"].shape[0], dtype=bool)
     target_points = np.asarray(bank["target_points"], dtype=float)
     intrinsics_gt = np.asarray(bank["intrinsics"], dtype=float)
-    intrinsics_init = intrinsics_gt + np.array([25.0, -20.0, 8.0, -6.0], dtype=float)
+    intrinsics_init = intrinsics_gt + default_intrinsics_init_offset(intrinsics_gt.size)
     candidate_rotations = np.asarray(bank["candidate_rotations"], dtype=float)[mask]
     candidate_translations = np.asarray(bank["candidate_translations"], dtype=float)[mask]
     measurements = generate_measurements(
@@ -640,10 +646,18 @@ def generate_fixed_camera_measurements(
         proj = np.full((target_points_board.shape[0], 2), np.nan, dtype=float)
         valid = z > 1e-9
         if np.any(valid):
+            fx, fy, cx, cy, dist = split_intrinsics(intrinsics)
+            k1, k2, p1, p2, k3 = dist
             x_norm = points_c[valid, 0] / z[valid]
             y_norm = points_c[valid, 1] / z[valid]
-            proj[valid, 0] = intrinsics[0] * x_norm + intrinsics[2]
-            proj[valid, 1] = intrinsics[1] * y_norm + intrinsics[3]
+            r2 = x_norm * x_norm + y_norm * y_norm
+            r4 = r2 * r2
+            r6 = r4 * r2
+            radial = 1.0 + k1 * r2 + k2 * r4 + k3 * r6
+            x_dist = x_norm * radial + 2.0 * p1 * x_norm * y_norm + p2 * (r2 + 2.0 * x_norm * x_norm)
+            y_dist = y_norm * radial + p1 * (r2 + 2.0 * y_norm * y_norm) + 2.0 * p2 * x_norm * y_norm
+            proj[valid, 0] = fx * x_dist + cx
+            proj[valid, 1] = fy * y_dist + cy
 
         valid = (
             np.isfinite(proj).all(axis=1)
@@ -712,8 +726,8 @@ def generate_discrete_candidate_checkerboard_bank_fixed_camera(
     min_projected_corner_spread_px: float = 12.0,
 ) -> dict:
     if intrinsics is None:
-        intrinsics = np.array([820.0, 815.0, image_size[0] / 2.0, image_size[1] / 2.0], dtype=float)
-    fx, fy, cx, cy = [float(v) for v in intrinsics]
+        intrinsics = default_intrinsics_vector(image_size)
+    fx, fy, cx, cy, _ = split_intrinsics(intrinsics)
     board_points = create_checkerboard_points(rows=board_rows, cols=board_cols, square_size=board_square_size)
 
     grid_rows, grid_cols = region_grid_shape
@@ -839,7 +853,7 @@ def build_fixed_camera_problem_from_candidate_bank(
     mask = bank["valid_mask"] if filtered_only else np.ones(bank["valid_mask"].shape[0], dtype=bool)
     target_points = np.asarray(bank["target_points"], dtype=float)
     intrinsics_gt = np.asarray(bank["intrinsics"], dtype=float)
-    intrinsics_init = intrinsics_gt + np.array([25.0, -20.0, 8.0, -6.0], dtype=float)
+    intrinsics_init = intrinsics_gt + default_intrinsics_init_offset(intrinsics_gt.size)
 
     board_rotations = np.asarray(bank["board_rotations"], dtype=float)[mask]
     board_translations = np.asarray(bank["board_translations"], dtype=float)[mask]
@@ -916,8 +930,8 @@ def generate_calibration_problem(
     board_square_size: float = 0.125,
 ) -> CalibrationProblem:
     rng = np.random.default_rng(seed)
-    intrinsics_gt = np.array([820.0, 815.0, image_size[0] / 2.0, image_size[1] / 2.0], dtype=float)
-    intrinsics_init = intrinsics_gt + np.array([25.0, -20.0, 8.0, -6.0], dtype=float)
+    intrinsics_gt = default_intrinsics_vector(image_size)
+    intrinsics_init = intrinsics_gt + default_intrinsics_init_offset(intrinsics_gt.size)
 
     target_points = create_checkerboard_points(rows=board_rows, cols=board_cols, square_size=board_square_size)
     candidate_rotations, candidate_translations = generate_candidate_camera_poses(
@@ -1003,8 +1017,8 @@ def generate_fixed_camera_calibration_problem(
     board_square_size: float = 0.125,
 ) -> CalibrationProblem:
     rng = np.random.default_rng(seed)
-    intrinsics_gt = np.array([820.0, 815.0, image_size[0] / 2.0, image_size[1] / 2.0], dtype=float)
-    intrinsics_init = intrinsics_gt + np.array([25.0, -20.0, 8.0, -6.0], dtype=float)
+    intrinsics_gt = default_intrinsics_vector(image_size)
+    intrinsics_init = intrinsics_gt + default_intrinsics_init_offset(intrinsics_gt.size)
     target_points = create_checkerboard_points(rows=board_rows, cols=board_cols, square_size=board_square_size)
     board_rotations, board_translations = generate_candidate_checkerboard_poses_fixed_camera(
         num_candidate_poses=num_candidate_poses,
