@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+build/
+*.egg-info/
+
+# Local tooling / stray files
+.claude/
+.codex
+texput.log
+/=0.9.12
+/optimal_camera_placement/
+/rosbag
+
+# Paper build artefacts and scratch copies
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.run.xml
+paper/*.synctex.gz
+paper/*.bak*
+paper/*copy.tex
+paper/temporary*.tex
+
+# Heavy / regenerable experiment artefacts
+results/**/*.bag
+results/**/*.npz
+results/kalibr_*/*/cam0/
+isaac_sim_scripts/generated_assets/*.log
