@@ -1,0 +1,969 @@
+
+=== Benchmark ===
+  problem     : results/k20/datasets/charuco_zero/all_candidate_problem_sigma10.npz
+  candidates  : 720
+  select_k    : 20
+  FIM backend : numeric
+  calibration : cv2.calibrateCamera
+
+[random] running 25 trials...
+    mean min_eig=9.0701e-02  ±2.05e-02
+
+[coverage] running...
+    selected 20 poses in 0.0s  score=nan
+
+[a-optimal] running...
+    selected 20 poses in 6.1s  score=-7.3897e+00
+
+[d-optimal] running...
+    selected 20 poses in 5.4s  score=7.3425e+01
+
+[greedy-e] running...
+    selected 20 poses in 5.5s  score=2.0367e-01
+
+[fw-e] running...
+[FW] Building 720 candidate information matrices...
+Building FIM:   0%|          | 0/720 [00:00<?, ?candidate/s]Building FIM:   4%|▍         | 32/720 [00:00<00:06, 100.89candidate/s]Building FIM:  18%|█▊        | 128/720 [00:00<00:02, 215.79candidate/s]Building FIM:  36%|███▌      | 256/720 [00:00<00:01, 396.05candidate/s]Building FIM:  71%|███████   | 512/720 [00:00<00:00, 740.25candidate/s]Building FIM: 100%|██████████| 720/720 [00:00<00:00, 745.61candidate/s]
+[FW] Done. Starting Frank-Wolfe optimization (select_k=20)...
+[FW] Pre-extracting dense blocks (intr_dim=9, num_poses=720)...
+[FW] Block extraction done. Starting iterations...
+[FW] iter=  0  min_eig=1.017107e-01
+[FW] iter=  1  min_eig=1.483392e-01
+[FW] iter=  2  min_eig=7.806873e-02
+[FW] iter=  3  min_eig=7.066446e-02
+[FW] iter=  4  min_eig=8.092981e-02
+[FW] iter=  5  min_eig=7.360027e-02
+[FW] iter=  6  min_eig=6.096309e-02
+[FW] iter=  7  min_eig=5.091177e-02
+[FW] iter=  8  min_eig=4.216107e-02
+[FW] iter=  9  min_eig=5.344305e-02
+[FW] iter= 10  min_eig=5.409727e-02
+[FW] iter= 11  min_eig=5.633090e-02
+[FW] iter= 12  min_eig=5.702399e-02
+[FW] iter= 13  min_eig=5.443707e-02
+[FW] iter= 14  min_eig=1.044113e-01
+[FW] iter= 15  min_eig=1.016608e-01
+[FW] iter= 16  min_eig=9.439398e-02
+[FW] iter= 17  min_eig=8.969082e-02
+[FW] iter= 18  min_eig=9.457101e-02
+[FW] iter= 19  min_eig=1.027281e-01
+[FW] iter= 20  min_eig=1.070809e-01
+[FW] iter= 21  min_eig=1.136009e-01
+[FW] iter= 22  min_eig=1.070834e-01
+[FW] iter= 23  min_eig=1.068069e-01
+[FW] iter= 24  min_eig=1.031877e-01
+[FW] iter= 25  min_eig=1.020142e-01
+[FW] iter= 26  min_eig=1.021130e-01
+[FW] iter= 27  min_eig=1.022578e-01
+[FW] iter= 28  min_eig=1.069539e-01
+[FW] iter= 29  min_eig=1.068371e-01
+[FW] iter= 30  min_eig=1.056351e-01
+[FW] iter= 31  min_eig=1.005793e-01
+[FW] iter= 32  min_eig=9.838162e-02
+[FW] iter= 33  min_eig=9.959938e-02
+[FW] iter= 34  min_eig=9.842302e-02
+[FW] iter= 35  min_eig=9.470199e-02
+[FW] iter= 36  min_eig=9.370504e-02
+[FW] iter= 37  min_eig=1.033373e-01
+[FW] iter= 38  min_eig=1.081812e-01
+[FW] iter= 39  min_eig=1.130553e-01
+[FW] iter= 40  min_eig=1.175011e-01
+[FW] iter= 41  min_eig=1.216725e-01
+[FW] iter= 42  min_eig=1.257103e-01
+[FW] iter= 43  min_eig=1.293547e-01
+[FW] iter= 44  min_eig=1.329204e-01
+[FW] iter= 45  min_eig=1.362803e-01
+[FW] iter= 46  min_eig=1.391841e-01
+[FW] iter= 47  min_eig=1.420845e-01
+[FW] iter= 48  min_eig=1.445959e-01
+[FW] iter= 49  min_eig=1.471296e-01
+[FW] iter= 50  min_eig=1.494771e-01
+[FW] iter= 51  min_eig=1.518156e-01
+[FW] iter= 52  min_eig=1.539631e-01
+[FW] iter= 53  min_eig=1.558444e-01
+[FW] iter= 54  min_eig=1.576813e-01
+[FW] iter= 55  min_eig=1.594268e-01
+[FW] iter= 56  min_eig=1.611913e-01
+[FW] iter= 57  min_eig=1.628185e-01
+[FW] iter= 58  min_eig=1.642737e-01
+[FW] iter= 59  min_eig=1.657943e-01
+[FW] iter= 60  min_eig=1.671986e-01
+[FW] iter= 61  min_eig=1.684527e-01
+[FW] iter= 62  min_eig=1.697711e-01
+[FW] iter= 63  min_eig=1.709897e-01
+[FW] iter= 64  min_eig=1.721191e-01
+[FW] iter= 65  min_eig=1.731379e-01
+[FW] iter= 66  min_eig=1.741871e-01
+[FW] iter= 67  min_eig=1.751789e-01
+[FW] iter= 68  min_eig=1.760839e-01
+[FW] iter= 69  min_eig=1.770274e-01
+[FW] iter= 70  min_eig=1.779027e-01
+[FW] iter= 71  min_eig=1.786918e-01
+[FW] iter= 72  min_eig=1.795304e-01
+[FW] iter= 73  min_eig=1.803090e-01
+[FW] iter= 74  min_eig=1.809985e-01
+[FW] iter= 75  min_eig=1.817463e-01
+[FW] iter= 76  min_eig=1.824406e-01
+[FW] iter= 77  min_eig=1.830864e-01
+[FW] iter= 78  min_eig=1.836725e-01
+[FW] iter= 79  min_eig=1.842986e-01
+[FW] iter= 80  min_eig=1.848336e-01
+[FW] iter= 81  min_eig=1.854400e-01
+[FW] iter= 82  min_eig=1.860033e-01
+[FW] iter= 83  min_eig=1.865273e-01
+[FW] iter= 84  min_eig=1.869950e-01
+[FW] iter= 85  min_eig=1.875054e-01
+[FW] iter= 86  min_eig=1.879801e-01
+[FW] iter= 87  min_eig=1.883839e-01
+[FW] iter= 88  min_eig=1.888500e-01
+[FW] iter= 89  min_eig=1.892834e-01
+[FW] iter= 90  min_eig=1.896565e-01
+[FW] iter= 91  min_eig=1.900817e-01
+[FW] iter= 92  min_eig=1.904770e-01
+[FW] iter= 93  min_eig=1.908451e-01
+[FW] iter= 94  min_eig=1.911872e-01
+[FW] iter= 95  min_eig=1.915505e-01
+[FW] iter= 96  min_eig=1.918887e-01
+[FW] iter= 97  min_eig=1.921874e-01
+[FW] iter= 98  min_eig=1.925220e-01
+[FW] iter= 99  min_eig=1.928331e-01
+[FW] iter=100  min_eig=1.930958e-01
+[FW] iter=101  min_eig=1.934059e-01
+[FW] iter=102  min_eig=1.936944e-01
+[FW] iter=103  min_eig=1.939386e-01
+[FW] iter=104  min_eig=1.942256e-01
+[FW] iter=105  min_eig=1.944923e-01
+[FW] iter=106  min_eig=1.947405e-01
+[FW] iter=107  min_eig=1.949712e-01
+[FW] iter=108  min_eig=1.952196e-01
+[FW] iter=109  min_eig=1.954506e-01
+[FW] iter=110  min_eig=1.956519e-01
+[FW] iter=111  min_eig=1.958834e-01
+[FW] iter=112  min_eig=1.960985e-01
+[FW] iter=113  min_eig=1.962782e-01
+[FW] iter=114  min_eig=1.964954e-01
+[FW] iter=115  min_eig=1.966973e-01
+[FW] iter=116  min_eig=1.968907e-01
+[FW] iter=117  min_eig=1.970787e-01
+[FW] iter=118  min_eig=1.972390e-01
+[FW] iter=119  min_eig=1.974289e-01
+[FW] iter=120  min_eig=1.976051e-01
+[FW] iter=121  min_eig=1.977449e-01
+[FW] iter=122  min_eig=1.979242e-01
+[FW] iter=123  min_eig=1.980906e-01
+[FW] iter=124  min_eig=1.982492e-01
+[FW] iter=125  min_eig=1.984046e-01
+[FW] iter=126  min_eig=1.985339e-01
+[FW] iter=127  min_eig=1.986918e-01
+[FW] iter=128  min_eig=1.988382e-01
+[FW] iter=129  min_eig=1.989479e-01
+[FW] iter=130  min_eig=1.990979e-01
+[FW] iter=131  min_eig=1.992369e-01
+[FW] iter=132  min_eig=1.993686e-01
+[FW] iter=133  min_eig=1.994988e-01
+[FW] iter=134  min_eig=1.996238e-01
+[FW] iter=135  min_eig=1.997456e-01
+[FW] iter=136  min_eig=1.998514e-01
+[FW] iter=137  min_eig=1.999765e-01
+[FW] iter=138  min_eig=2.000923e-01
+[FW] iter=139  min_eig=2.002040e-01
+[FW] iter=140  min_eig=2.003125e-01
+[FW] iter=141  min_eig=2.004091e-01
+[FW] iter=142  min_eig=2.005210e-01
+[FW] iter=143  min_eig=2.006245e-01
+[FW] iter=144  min_eig=2.007245e-01
+[FW] iter=145  min_eig=2.008215e-01
+[FW] iter=146  min_eig=2.009010e-01
+[FW] iter=147  min_eig=2.010018e-01
+[FW] iter=148  min_eig=2.010950e-01
+[FW] iter=149  min_eig=2.011786e-01
+[FW] iter=150  min_eig=2.012748e-01
+[FW] iter=151  min_eig=2.013636e-01
+[FW] iter=152  min_eig=2.014486e-01
+[FW] iter=153  min_eig=2.015320e-01
+[FW] iter=154  min_eig=2.016052e-01
+[FW] iter=155  min_eig=2.016920e-01
+[FW] iter=156  min_eig=2.017720e-01
+[FW] iter=157  min_eig=2.018489e-01
+[FW] iter=158  min_eig=2.019241e-01
+[FW] iter=159  min_eig=2.019847e-01
+[FW] iter=160  min_eig=2.020636e-01
+[FW] iter=161  min_eig=2.021363e-01
+[FW] iter=162  min_eig=2.021997e-01
+[FW] iter=163  min_eig=2.022754e-01
+[FW] iter=164  min_eig=2.023451e-01
+[FW] iter=165  min_eig=2.024114e-01
+[FW] iter=166  min_eig=2.024769e-01
+[FW] iter=167  min_eig=2.025259e-01
+[FW] iter=168  min_eig=2.025950e-01
+[FW] iter=169  min_eig=2.026587e-01
+[FW] iter=170  min_eig=2.027124e-01
+[FW] iter=171  min_eig=2.027789e-01
+[FW] iter=172  min_eig=2.028401e-01
+[FW] iter=173  min_eig=2.028975e-01
+[FW] iter=174  min_eig=2.029551e-01
+[FW] iter=175  min_eig=2.030024e-01
+[FW] iter=176  min_eig=2.030631e-01
+[FW] iter=177  min_eig=2.031189e-01
+[FW] iter=178  min_eig=2.031714e-01
+[FW] iter=179  min_eig=2.032239e-01
+[FW] iter=180  min_eig=2.032623e-01
+[FW] iter=181  min_eig=2.033181e-01
+[FW] iter=182  min_eig=2.033693e-01
+[FW] iter=183  min_eig=2.034111e-01
+[FW] iter=184  min_eig=2.034651e-01
+[FW] iter=185  min_eig=2.035146e-01
+[FW] iter=186  min_eig=2.035606e-01
+[FW] iter=187  min_eig=2.036072e-01
+[FW] iter=188  min_eig=2.036446e-01
+[FW] iter=189  min_eig=2.036941e-01
+[FW] iter=190  min_eig=2.037395e-01
+[FW] iter=191  min_eig=2.037817e-01
+[FW] iter=192  min_eig=2.038245e-01
+[FW] iter=193  min_eig=2.038551e-01
+[FW] iter=194  min_eig=2.039009e-01
+[FW] iter=195  min_eig=2.039427e-01
+[FW] iter=196  min_eig=2.039844e-01
+[FW] iter=197  min_eig=2.040238e-01
+[FW] iter=198  min_eig=2.040561e-01
+[FW] iter=199  min_eig=2.040981e-01
+[FW] iter=200  min_eig=2.041364e-01
+[FW] iter=201  min_eig=2.041611e-01
+[FW] iter=202  min_eig=2.042024e-01
+[FW] iter=203  min_eig=2.042401e-01
+[FW] iter=204  min_eig=2.042771e-01
+[FW] iter=205  min_eig=2.043126e-01
+[FW] iter=206  min_eig=2.043404e-01
+[FW] iter=207  min_eig=2.043784e-01
+[FW] iter=208  min_eig=2.044129e-01
+[FW] iter=209  min_eig=2.044448e-01
+[FW] iter=210  min_eig=2.044774e-01
+[FW] iter=211  min_eig=2.045019e-01
+[FW] iter=212  min_eig=2.045372e-01
+[FW] iter=213  min_eig=2.045693e-01
+[FW] iter=214  min_eig=2.046012e-01
+[FW] iter=215  min_eig=2.046314e-01
+[FW] iter=216  min_eig=2.046551e-01
+[FW] iter=217  min_eig=2.046877e-01
+[FW] iter=218  min_eig=2.047172e-01
+[FW] iter=219  min_eig=2.047372e-01
+[FW] iter=220  min_eig=2.047694e-01
+[FW] iter=221  min_eig=2.047986e-01
+[FW] iter=222  min_eig=2.048272e-01
+[FW] iter=223  min_eig=2.048546e-01
+[FW] iter=224  min_eig=2.048822e-01
+[FW] iter=225  min_eig=2.049080e-01
+[FW] iter=226  min_eig=2.049309e-01
+[FW] iter=227  min_eig=2.049591e-01
+[FW] iter=228  min_eig=2.049846e-01
+[FW] iter=229  min_eig=2.050103e-01
+[FW] iter=230  min_eig=2.050342e-01
+[FW] iter=231  min_eig=2.050562e-01
+[FW] iter=232  min_eig=2.050825e-01
+[FW] iter=233  min_eig=2.051061e-01
+[FW] iter=234  min_eig=2.051256e-01
+[FW] iter=235  min_eig=2.051515e-01
+[FW] iter=236  min_eig=2.051749e-01
+[FW] iter=237  min_eig=2.051980e-01
+[FW] iter=238  min_eig=2.052200e-01
+[FW] iter=239  min_eig=2.052388e-01
+[FW] iter=240  min_eig=2.052630e-01
+[FW] iter=241  min_eig=2.052847e-01
+[FW] iter=242  min_eig=2.053063e-01
+[FW] iter=243  min_eig=2.053267e-01
+[FW] iter=244  min_eig=2.053451e-01
+[FW] iter=245  min_eig=2.053675e-01
+[FW] iter=246  min_eig=2.053878e-01
+[FW] iter=247  min_eig=2.054039e-01
+[FW] iter=248  min_eig=2.054262e-01
+[FW] iter=249  min_eig=2.054463e-01
+[FW] iter=250  min_eig=2.054658e-01
+[FW] iter=251  min_eig=2.054847e-01
+[FW] iter=252  min_eig=2.055004e-01
+[FW] iter=253  min_eig=2.055212e-01
+[FW] iter=254  min_eig=2.055400e-01
+[FW] iter=255  min_eig=2.055583e-01
+[FW] iter=256  min_eig=2.055758e-01
+[FW] iter=257  min_eig=2.055912e-01
+[FW] iter=258  min_eig=2.056107e-01
+[FW] iter=259  min_eig=2.056282e-01
+[FW] iter=260  min_eig=2.056416e-01
+[FW] iter=261  min_eig=2.056609e-01
+[FW] iter=262  min_eig=2.056783e-01
+[FW] iter=263  min_eig=2.056950e-01
+[FW] iter=264  min_eig=2.057113e-01
+[FW] iter=265  min_eig=2.057244e-01
+[FW] iter=266  min_eig=2.057426e-01
+[FW] iter=267  min_eig=2.057589e-01
+[FW] iter=268  min_eig=2.057745e-01
+[FW] iter=269  min_eig=2.057897e-01
+[FW] iter=270  min_eig=2.057997e-01
+[FW] iter=271  min_eig=2.058169e-01
+[FW] iter=272  min_eig=2.058322e-01
+[FW] iter=273  min_eig=2.058439e-01
+[FW] iter=274  min_eig=2.058609e-01
+[FW] iter=275  min_eig=2.058761e-01
+[FW] iter=276  min_eig=2.058904e-01
+[FW] iter=277  min_eig=2.059046e-01
+[FW] iter=278  min_eig=2.059157e-01
+[FW] iter=279  min_eig=2.059316e-01
+[FW] iter=280  min_eig=2.059459e-01
+[FW] iter=281  min_eig=2.059594e-01
+[FW] iter=282  min_eig=2.059727e-01
+[FW] iter=283  min_eig=2.059811e-01
+[FW] iter=284  min_eig=2.059962e-01
+[FW] iter=285  min_eig=2.060097e-01
+[FW] iter=286  min_eig=2.060237e-01
+[FW] iter=287  min_eig=2.060363e-01
+[FW] iter=288  min_eig=2.060459e-01
+[FW] iter=289  min_eig=2.060600e-01
+[FW] iter=290  min_eig=2.060726e-01
+[FW] iter=291  min_eig=2.060819e-01
+[FW] iter=292  min_eig=2.060961e-01
+[FW] iter=293  min_eig=2.061086e-01
+[FW] iter=294  min_eig=2.061202e-01
+[FW] iter=295  min_eig=2.061320e-01
+[FW] iter=296  min_eig=2.061391e-01
+[FW] iter=297  min_eig=2.061525e-01
+[FW] iter=298  min_eig=2.061644e-01
+[FW] iter=299  min_eig=2.061766e-01
+    selected 20 poses in 4.3s  score=1.9626e-01
+
+[fw-a] running...
+[FW-A] Building 720 candidate information matrices...
+Building FIM:   0%|          | 0/720 [00:00<?, ?candidate/s]Building FIM:  18%|█▊        | 128/720 [00:00<00:00, 843.63candidate/s]Building FIM:  30%|██▉       | 213/720 [00:00<00:00, 759.18candidate/s]Building FIM:  40%|████      | 289/720 [00:00<00:00, 740.65candidate/s]Building FIM:  50%|█████     | 363/720 [00:00<00:00, 713.17candidate/s]Building FIM:  62%|██████▏   | 448/720 [00:00<00:00, 701.74candidate/s]Building FIM: 100%|██████████| 720/720 [00:00<00:00, 1024.85candidate/s]
+[FW-A] Done. Starting Frank-Wolfe A-optimal (select_k=20)...
+[FW-A] Pre-extracting dense blocks (intr_dim=9, num_poses=720)...
+[FW-A] Block extraction done. Starting iterations...
+[FW-A] iter=  0  -trace(H^{-1})=-1.323318e+01
+[FW-A] iter=  1  -trace(H^{-1})=-1.321305e+03
+[FW-A] iter=  2  -trace(H^{-1})=-2.494516e+01
+[FW-A] iter=  3  -trace(H^{-1})=-2.657850e+01
+[FW-A] iter=  4  -trace(H^{-1})=-1.579354e+01
+[FW-A] iter=  5  -trace(H^{-1})=-1.518858e+01
+[FW-A] iter=  6  -trace(H^{-1})=-1.650409e+01
+[FW-A] iter=  7  -trace(H^{-1})=-1.809203e+01
+[FW-A] iter=  8  -trace(H^{-1})=-2.042190e+01
+[FW-A] iter=  9  -trace(H^{-1})=-1.997516e+01
+[FW-A] iter= 10  -trace(H^{-1})=-1.957754e+01
+[FW-A] iter= 11  -trace(H^{-1})=-1.949053e+01
+[FW-A] iter= 12  -trace(H^{-1})=-1.959110e+01
+[FW-A] iter= 13  -trace(H^{-1})=-2.019531e+01
+[FW-A] iter= 14  -trace(H^{-1})=-1.366434e+01
+[FW-A] iter= 15  -trace(H^{-1})=-1.381843e+01
+[FW-A] iter= 16  -trace(H^{-1})=-1.457865e+01
+[FW-A] iter= 17  -trace(H^{-1})=-1.482691e+01
+[FW-A] iter= 18  -trace(H^{-1})=-1.424697e+01
+[FW-A] iter= 19  -trace(H^{-1})=-1.427515e+01
+[FW-A] iter= 20  -trace(H^{-1})=-1.305312e+01
+[FW-A] iter= 21  -trace(H^{-1})=-1.311914e+01
+[FW-A] iter= 22  -trace(H^{-1})=-1.324105e+01
+[FW-A] iter= 23  -trace(H^{-1})=-1.351769e+01
+[FW-A] iter= 24  -trace(H^{-1})=-1.383056e+01
+[FW-A] iter= 25  -trace(H^{-1})=-1.364995e+01
+[FW-A] iter= 26  -trace(H^{-1})=-1.357719e+01
+[FW-A] iter= 27  -trace(H^{-1})=-1.307783e+01
+[FW-A] iter= 28  -trace(H^{-1})=-1.272215e+01
+[FW-A] iter= 29  -trace(H^{-1})=-1.255103e+01
+[FW-A] iter= 30  -trace(H^{-1})=-1.275350e+01
+[FW-A] iter= 31  -trace(H^{-1})=-1.323353e+01
+[FW-A] iter= 32  -trace(H^{-1})=-1.351939e+01
+[FW-A] iter= 33  -trace(H^{-1})=-1.332872e+01
+[FW-A] iter= 34  -trace(H^{-1})=-1.333196e+01
+[FW-A] iter= 35  -trace(H^{-1})=-1.372804e+01
+[FW-A] iter= 36  -trace(H^{-1})=-1.378838e+01
+[FW-A] iter= 37  -trace(H^{-1})=-1.303409e+01
+[FW-A] iter= 38  -trace(H^{-1})=-1.246520e+01
+[FW-A] iter= 39  -trace(H^{-1})=-1.202838e+01
+[FW-A] iter= 40  -trace(H^{-1})=-1.162407e+01
+[FW-A] iter= 41  -trace(H^{-1})=-1.128009e+01
+[FW-A] iter= 42  -trace(H^{-1})=-1.100266e+01
+[FW-A] iter= 43  -trace(H^{-1})=-1.074267e+01
+[FW-A] iter= 44  -trace(H^{-1})=-1.052074e+01
+[FW-A] iter= 45  -trace(H^{-1})=-1.032312e+01
+[FW-A] iter= 46  -trace(H^{-1})=-1.014099e+01
+[FW-A] iter= 47  -trace(H^{-1})=-9.971705e+00
+[FW-A] iter= 48  -trace(H^{-1})=-9.828421e+00
+[FW-A] iter= 49  -trace(H^{-1})=-9.687816e+00
+[FW-A] iter= 50  -trace(H^{-1})=-9.564089e+00
+[FW-A] iter= 51  -trace(H^{-1})=-9.450796e+00
+[FW-A] iter= 52  -trace(H^{-1})=-9.343377e+00
+[FW-A] iter= 53  -trace(H^{-1})=-9.247950e+00
+[FW-A] iter= 54  -trace(H^{-1})=-9.161352e+00
+[FW-A] iter= 55  -trace(H^{-1})=-9.076833e+00
+[FW-A] iter= 56  -trace(H^{-1})=-9.003753e+00
+[FW-A] iter= 57  -trace(H^{-1})=-8.930006e+00
+[FW-A] iter= 58  -trace(H^{-1})=-8.863932e+00
+[FW-A] iter= 59  -trace(H^{-1})=-8.803077e+00
+[FW-A] iter= 60  -trace(H^{-1})=-8.743183e+00
+[FW-A] iter= 61  -trace(H^{-1})=-8.689247e+00
+[FW-A] iter= 62  -trace(H^{-1})=-8.640202e+00
+[FW-A] iter= 63  -trace(H^{-1})=-8.590695e+00
+[FW-A] iter= 64  -trace(H^{-1})=-8.547365e+00
+[FW-A] iter= 65  -trace(H^{-1})=-8.502913e+00
+[FW-A] iter= 66  -trace(H^{-1})=-8.462727e+00
+[FW-A] iter= 67  -trace(H^{-1})=-8.425770e+00
+[FW-A] iter= 68  -trace(H^{-1})=-8.388317e+00
+[FW-A] iter= 69  -trace(H^{-1})=-8.354357e+00
+[FW-A] iter= 70  -trace(H^{-1})=-8.323609e+00
+[FW-A] iter= 71  -trace(H^{-1})=-8.291673e+00
+[FW-A] iter= 72  -trace(H^{-1})=-8.263501e+00
+[FW-A] iter= 73  -trace(H^{-1})=-8.234272e+00
+[FW-A] iter= 74  -trace(H^{-1})=-8.207728e+00
+[FW-A] iter= 75  -trace(H^{-1})=-8.183466e+00
+[FW-A] iter= 76  -trace(H^{-1})=-8.158223e+00
+[FW-A] iter= 77  -trace(H^{-1})=-8.135257e+00
+[FW-A] iter= 78  -trace(H^{-1})=-8.113975e+00
+[FW-A] iter= 79  -trace(H^{-1})=-8.092695e+00
+[FW-A] iter= 80  -trace(H^{-1})=-8.073145e+00
+[FW-A] iter= 81  -trace(H^{-1})=-8.052718e+00
+[FW-A] iter= 82  -trace(H^{-1})=-8.034127e+00
+[FW-A] iter= 83  -trace(H^{-1})=-8.017383e+00
+[FW-A] iter= 84  -trace(H^{-1})=-7.999422e+00
+[FW-A] iter= 85  -trace(H^{-1})=-7.983058e+00
+[FW-A] iter= 86  -trace(H^{-1})=-7.967734e+00
+[FW-A] iter= 87  -trace(H^{-1})=-7.952401e+00
+[FW-A] iter= 88  -trace(H^{-1})=-7.938531e+00
+[FW-A] iter= 89  -trace(H^{-1})=-7.923606e+00
+[FW-A] iter= 90  -trace(H^{-1})=-7.910014e+00
+[FW-A] iter= 91  -trace(H^{-1})=-7.897988e+00
+[FW-A] iter= 92  -trace(H^{-1})=-7.884685e+00
+[FW-A] iter= 93  -trace(H^{-1})=-7.872563e+00
+[FW-A] iter= 94  -trace(H^{-1})=-7.861104e+00
+[FW-A] iter= 95  -trace(H^{-1})=-7.849644e+00
+[FW-A] iter= 96  -trace(H^{-1})=-7.839466e+00
+[FW-A] iter= 97  -trace(H^{-1})=-7.828179e+00
+[FW-A] iter= 98  -trace(H^{-1})=-7.817904e+00
+[FW-A] iter= 99  -trace(H^{-1})=-7.809001e+00
+[FW-A] iter=100  -trace(H^{-1})=-7.798832e+00
+[FW-A] iter=101  -trace(H^{-1})=-7.789573e+00
+[FW-A] iter=102  -trace(H^{-1})=-7.780743e+00
+[FW-A] iter=103  -trace(H^{-1})=-7.771926e+00
+[FW-A] iter=104  -trace(H^{-1})=-7.764257e+00
+[FW-A] iter=105  -trace(H^{-1})=-7.755484e+00
+[FW-A] iter=106  -trace(H^{-1})=-7.747506e+00
+[FW-A] iter=107  -trace(H^{-1})=-7.740510e+00
+[FW-A] iter=108  -trace(H^{-1})=-7.732864e+00
+[FW-A] iter=109  -trace(H^{-1})=-7.726189e+00
+[FW-A] iter=110  -trace(H^{-1})=-7.718544e+00
+[FW-A] iter=111  -trace(H^{-1})=-7.711602e+00
+[FW-A] iter=112  -trace(H^{-1})=-7.705713e+00
+[FW-A] iter=113  -trace(H^{-1})=-7.698742e+00
+[FW-A] iter=114  -trace(H^{-1})=-7.692413e+00
+[FW-A] iter=115  -trace(H^{-1})=-7.686811e+00
+[FW-A] iter=116  -trace(H^{-1})=-7.680712e+00
+[FW-A] iter=117  -trace(H^{-1})=-7.675520e+00
+[FW-A] iter=118  -trace(H^{-1})=-7.669369e+00
+[FW-A] iter=119  -trace(H^{-1})=-7.663793e+00
+[FW-A] iter=120  -trace(H^{-1})=-7.659195e+00
+[FW-A] iter=121  -trace(H^{-1})=-7.653550e+00
+[FW-A] iter=122  -trace(H^{-1})=-7.648434e+00
+[FW-A] iter=123  -trace(H^{-1})=-7.643866e+00
+[FW-A] iter=124  -trace(H^{-1})=-7.638913e+00
+[FW-A] iter=125  -trace(H^{-1})=-7.634812e+00
+[FW-A] iter=126  -trace(H^{-1})=-7.629779e+00
+[FW-A] iter=127  -trace(H^{-1})=-7.625225e+00
+[FW-A] iter=128  -trace(H^{-1})=-7.621583e+00
+[FW-A] iter=129  -trace(H^{-1})=-7.616937e+00
+[FW-A] iter=130  -trace(H^{-1})=-7.612736e+00
+[FW-A] iter=131  -trace(H^{-1})=-7.608953e+00
+[FW-A] iter=132  -trace(H^{-1})=-7.604869e+00
+[FW-A] iter=133  -trace(H^{-1})=-7.601589e+00
+[FW-A] iter=134  -trace(H^{-1})=-7.597409e+00
+[FW-A] iter=135  -trace(H^{-1})=-7.593635e+00
+[FW-A] iter=136  -trace(H^{-1})=-7.590601e+00
+[FW-A] iter=137  -trace(H^{-1})=-7.586915e+00
+[FW-A] iter=138  -trace(H^{-1})=-7.583942e+00
+[FW-A] iter=139  -trace(H^{-1})=-7.580158e+00
+[FW-A] iter=140  -trace(H^{-1})=-7.576748e+00
+[FW-A] iter=141  -trace(H^{-1})=-7.574103e+00
+[FW-A] iter=142  -trace(H^{-1})=-7.570589e+00
+[FW-A] iter=143  -trace(H^{-1})=-7.567423e+00
+[FW-A] iter=144  -trace(H^{-1})=-7.564853e+00
+[FW-A] iter=145  -trace(H^{-1})=-7.561752e+00
+[FW-A] iter=146  -trace(H^{-1})=-7.559334e+00
+[FW-A] iter=147  -trace(H^{-1})=-7.556130e+00
+[FW-A] iter=148  -trace(H^{-1})=-7.553248e+00
+[FW-A] iter=149  -trace(H^{-1})=-7.550667e+00
+[FW-A] iter=150  -trace(H^{-1})=-7.548115e+00
+[FW-A] iter=151  -trace(H^{-1})=-7.545426e+00
+[FW-A] iter=152  -trace(H^{-1})=-7.543229e+00
+[FW-A] iter=153  -trace(H^{-1})=-7.540586e+00
+[FW-A] iter=154  -trace(H^{-1})=-7.538222e+00
+[FW-A] iter=155  -trace(H^{-1})=-7.535873e+00
+[FW-A] iter=156  -trace(H^{-1})=-7.533404e+00
+[FW-A] iter=157  -trace(H^{-1})=-7.531199e+00
+[FW-A] iter=158  -trace(H^{-1})=-7.529091e+00
+[FW-A] iter=159  -trace(H^{-1})=-7.526780e+00
+[FW-A] iter=160  -trace(H^{-1})=-7.524886e+00
+[FW-A] iter=161  -trace(H^{-1})=-7.522608e+00
+[FW-A] iter=162  -trace(H^{-1})=-7.520577e+00
+[FW-A] iter=163  -trace(H^{-1})=-7.518623e+00
+[FW-A] iter=164  -trace(H^{-1})=-7.516489e+00
+[FW-A] iter=165  -trace(H^{-1})=-7.514588e+00
+[FW-A] iter=166  -trace(H^{-1})=-7.512835e+00
+[FW-A] iter=167  -trace(H^{-1})=-7.510831e+00
+[FW-A] iter=168  -trace(H^{-1})=-7.509184e+00
+[FW-A] iter=169  -trace(H^{-1})=-7.507204e+00
+[FW-A] iter=170  -trace(H^{-1})=-7.505444e+00
+[FW-A] iter=171  -trace(H^{-1})=-7.503809e+00
+[FW-A] iter=172  -trace(H^{-1})=-7.501949e+00
+[FW-A] iter=173  -trace(H^{-1})=-7.500298e+00
+[FW-A] iter=174  -trace(H^{-1})=-7.498832e+00
+[FW-A] iter=175  -trace(H^{-1})=-7.497081e+00
+[FW-A] iter=176  -trace(H^{-1})=-7.495637e+00
+[FW-A] iter=177  -trace(H^{-1})=-7.493903e+00
+[FW-A] iter=178  -trace(H^{-1})=-7.492365e+00
+[FW-A] iter=179  -trace(H^{-1})=-7.490991e+00
+[FW-A] iter=180  -trace(H^{-1})=-7.489357e+00
+[FW-A] iter=181  -trace(H^{-1})=-7.487911e+00
+[FW-A] iter=182  -trace(H^{-1})=-7.486595e+00
+[FW-A] iter=183  -trace(H^{-1})=-7.485156e+00
+[FW-A] iter=184  -trace(H^{-1})=-7.483865e+00
+[FW-A] iter=185  -trace(H^{-1})=-7.482334e+00
+[FW-A] iter=186  -trace(H^{-1})=-7.480981e+00
+[FW-A] iter=187  -trace(H^{-1})=-7.479825e+00
+[FW-A] iter=188  -trace(H^{-1})=-7.478380e+00
+[FW-A] iter=189  -trace(H^{-1})=-7.477105e+00
+[FW-A] iter=190  -trace(H^{-1})=-7.475933e+00
+[FW-A] iter=191  -trace(H^{-1})=-7.474661e+00
+[FW-A] iter=192  -trace(H^{-1})=-7.473570e+00
+[FW-A] iter=193  -trace(H^{-1})=-7.472210e+00
+[FW-A] iter=194  -trace(H^{-1})=-7.471011e+00
+[FW-A] iter=195  -trace(H^{-1})=-7.470037e+00
+[FW-A] iter=196  -trace(H^{-1})=-7.468751e+00
+[FW-A] iter=197  -trace(H^{-1})=-7.467619e+00
+[FW-A] iter=198  -trace(H^{-1})=-7.466569e+00
+[FW-A] iter=199  -trace(H^{-1})=-7.465438e+00
+[FW-A] iter=200  -trace(H^{-1})=-7.464514e+00
+[FW-A] iter=201  -trace(H^{-1})=-7.463299e+00
+[FW-A] iter=202  -trace(H^{-1})=-7.462230e+00
+[FW-A] iter=203  -trace(H^{-1})=-7.461408e+00
+[FW-A] iter=204  -trace(H^{-1})=-7.460256e+00
+[FW-A] iter=205  -trace(H^{-1})=-7.459245e+00
+[FW-A] iter=206  -trace(H^{-1})=-7.458300e+00
+[FW-A] iter=207  -trace(H^{-1})=-7.457289e+00
+[FW-A] iter=208  -trace(H^{-1})=-7.456504e+00
+[FW-A] iter=209  -trace(H^{-1})=-7.455413e+00
+[FW-A] iter=210  -trace(H^{-1})=-7.454455e+00
+[FW-A] iter=211  -trace(H^{-1})=-7.453708e+00
+[FW-A] iter=212  -trace(H^{-1})=-7.452747e+00
+[FW-A] iter=213  -trace(H^{-1})=-7.451996e+00
+[FW-A] iter=214  -trace(H^{-1})=-7.450959e+00
+[FW-A] iter=215  -trace(H^{-1})=-7.450050e+00
+[FW-A] iter=216  -trace(H^{-1})=-7.449385e+00
+[FW-A] iter=217  -trace(H^{-1})=-7.448400e+00
+[FW-A] iter=218  -trace(H^{-1})=-7.447538e+00
+[FW-A] iter=219  -trace(H^{-1})=-7.446857e+00
+[FW-A] iter=220  -trace(H^{-1})=-7.445991e+00
+[FW-A] iter=221  -trace(H^{-1})=-7.445352e+00
+[FW-A] iter=222  -trace(H^{-1})=-7.444413e+00
+[FW-A] iter=223  -trace(H^{-1})=-7.443593e+00
+[FW-A] iter=224  -trace(H^{-1})=-7.443029e+00
+[FW-A] iter=225  -trace(H^{-1})=-7.442136e+00
+[FW-A] iter=226  -trace(H^{-1})=-7.441357e+00
+[FW-A] iter=227  -trace(H^{-1})=-7.440734e+00
+[FW-A] iter=228  -trace(H^{-1})=-7.439950e+00
+[FW-A] iter=229  -trace(H^{-1})=-7.439405e+00
+[FW-A] iter=230  -trace(H^{-1})=-7.438552e+00
+[FW-A] iter=231  -trace(H^{-1})=-7.437808e+00
+[FW-A] iter=232  -trace(H^{-1})=-7.437168e+00
+[FW-A] iter=233  -trace(H^{-1})=-7.436519e+00
+[FW-A] iter=234  -trace(H^{-1})=-7.435810e+00
+[FW-A] iter=235  -trace(H^{-1})=-7.435239e+00
+[FW-A] iter=236  -trace(H^{-1})=-7.434525e+00
+[FW-A] iter=237  -trace(H^{-1})=-7.433911e+00
+[FW-A] iter=238  -trace(H^{-1})=-7.433285e+00
+[FW-A] iter=239  -trace(H^{-1})=-7.432605e+00
+[FW-A] iter=240  -trace(H^{-1})=-7.432022e+00
+[FW-A] iter=241  -trace(H^{-1})=-7.431462e+00
+[FW-A] iter=242  -trace(H^{-1})=-7.430814e+00
+[FW-A] iter=243  -trace(H^{-1})=-7.430289e+00
+[FW-A] iter=244  -trace(H^{-1})=-7.429635e+00
+[FW-A] iter=245  -trace(H^{-1})=-7.429074e+00
+[FW-A] iter=246  -trace(H^{-1})=-7.428532e+00
+[FW-A] iter=247  -trace(H^{-1})=-7.427909e+00
+[FW-A] iter=248  -trace(H^{-1})=-7.427376e+00
+[FW-A] iter=249  -trace(H^{-1})=-7.426893e+00
+[FW-A] iter=250  -trace(H^{-1})=-7.426298e+00
+[FW-A] iter=251  -trace(H^{-1})=-7.425814e+00
+[FW-A] iter=252  -trace(H^{-1})=-7.425212e+00
+[FW-A] iter=253  -trace(H^{-1})=-7.424698e+00
+[FW-A] iter=254  -trace(H^{-1})=-7.424229e+00
+[FW-A] iter=255  -trace(H^{-1})=-7.423655e+00
+[FW-A] iter=256  -trace(H^{-1})=-7.423166e+00
+[FW-A] iter=257  -trace(H^{-1})=-7.422707e+00
+[FW-A] iter=258  -trace(H^{-1})=-7.422210e+00
+[FW-A] iter=259  -trace(H^{-1})=-7.421753e+00
+[FW-A] iter=260  -trace(H^{-1})=-7.421198e+00
+[FW-A] iter=261  -trace(H^{-1})=-7.420725e+00
+[FW-A] iter=262  -trace(H^{-1})=-7.420320e+00
+[FW-A] iter=263  -trace(H^{-1})=-7.419790e+00
+[FW-A] iter=264  -trace(H^{-1})=-7.419339e+00
+[FW-A] iter=265  -trace(H^{-1})=-7.418913e+00
+[FW-A] iter=266  -trace(H^{-1})=-7.418453e+00
+[FW-A] iter=267  -trace(H^{-1})=-7.418058e+00
+[FW-A] iter=268  -trace(H^{-1})=-7.417545e+00
+[FW-A] iter=269  -trace(H^{-1})=-7.417107e+00
+[FW-A] iter=270  -trace(H^{-1})=-7.416759e+00
+[FW-A] iter=271  -trace(H^{-1})=-7.416268e+00
+[FW-A] iter=272  -trace(H^{-1})=-7.415851e+00
+[FW-A] iter=273  -trace(H^{-1})=-7.415453e+00
+[FW-A] iter=274  -trace(H^{-1})=-7.415028e+00
+[FW-A] iter=275  -trace(H^{-1})=-7.414686e+00
+[FW-A] iter=276  -trace(H^{-1})=-7.414209e+00
+[FW-A] iter=277  -trace(H^{-1})=-7.413804e+00
+[FW-A] iter=278  -trace(H^{-1})=-7.413505e+00
+[FW-A] iter=279  -trace(H^{-1})=-7.413049e+00
+[FW-A] iter=280  -trace(H^{-1})=-7.412662e+00
+[FW-A] iter=281  -trace(H^{-1})=-7.412289e+00
+[FW-A] iter=282  -trace(H^{-1})=-7.411895e+00
+[FW-A] iter=283  -trace(H^{-1})=-7.411600e+00
+[FW-A] iter=284  -trace(H^{-1})=-7.411156e+00
+[FW-A] iter=285  -trace(H^{-1})=-7.410780e+00
+[FW-A] iter=286  -trace(H^{-1})=-7.410496e+00
+[FW-A] iter=287  -trace(H^{-1})=-7.410111e+00
+[FW-A] iter=288  -trace(H^{-1})=-7.409821e+00
+[FW-A] iter=289  -trace(H^{-1})=-7.409388e+00
+[FW-A] iter=290  -trace(H^{-1})=-7.409021e+00
+[FW-A] iter=291  -trace(H^{-1})=-7.408769e+00
+[FW-A] iter=292  -trace(H^{-1})=-7.408355e+00
+[FW-A] iter=293  -trace(H^{-1})=-7.408004e+00
+[FW-A] iter=294  -trace(H^{-1})=-7.407736e+00
+[FW-A] iter=295  -trace(H^{-1})=-7.407377e+00
+[FW-A] iter=296  -trace(H^{-1})=-7.407127e+00
+[FW-A] iter=297  -trace(H^{-1})=-7.406723e+00
+[FW-A] iter=298  -trace(H^{-1})=-7.406380e+00
+[FW-A] iter=299  -trace(H^{-1})=-7.406165e+00
+    selected 20 poses in 4.3s  score=-7.8533e+00
+
+[fw-d] running...
+[FW-D] Building 720 candidate information matrices...
+Building FIM:   0%|          | 0/720 [00:00<?, ?candidate/s]Building FIM:  62%|██████▏   | 448/720 [00:00<00:00, 3236.81candidate/s]Building FIM: 100%|██████████| 720/720 [00:00<00:00, 3450.21candidate/s]
+[FW-D] Done. Starting Frank-Wolfe D-optimal (select_k=20)...
+[FW-D] Pre-extracting dense blocks (intr_dim=9, num_poses=720)...
+[FW-D] Block extraction done. Starting iterations...
+[FW-D] iter=  0  logdet=6.987890e+01
+[FW-D] iter=  1  logdet=7.321622e+01
+[FW-D] iter=  2  logdet=7.049144e+01
+[FW-D] iter=  3  logdet=6.892841e+01
+[FW-D] iter=  4  logdet=6.888870e+01
+[FW-D] iter=  5  logdet=6.852636e+01
+[FW-D] iter=  6  logdet=6.840646e+01
+[FW-D] iter=  7  logdet=6.828015e+01
+[FW-D] iter=  8  logdet=6.849491e+01
+[FW-D] iter=  9  logdet=6.894578e+01
+[FW-D] iter= 10  logdet=6.902873e+01
+[FW-D] iter= 11  logdet=6.901744e+01
+[FW-D] iter= 12  logdet=6.909608e+01
+[FW-D] iter= 13  logdet=6.960205e+01
+[FW-D] iter= 14  logdet=7.007926e+01
+[FW-D] iter= 15  logdet=6.988972e+01
+[FW-D] iter= 16  logdet=7.018732e+01
+[FW-D] iter= 17  logdet=7.014556e+01
+[FW-D] iter= 18  logdet=7.010611e+01
+[FW-D] iter= 19  logdet=7.026016e+01
+[FW-D] iter= 20  logdet=7.025848e+01
+[FW-D] iter= 21  logdet=7.017898e+01
+[FW-D] iter= 22  logdet=7.019339e+01
+[FW-D] iter= 23  logdet=7.014110e+01
+[FW-D] iter= 24  logdet=7.006290e+01
+[FW-D] iter= 25  logdet=6.995918e+01
+[FW-D] iter= 26  logdet=6.999498e+01
+[FW-D] iter= 27  logdet=6.998360e+01
+[FW-D] iter= 28  logdet=7.000381e+01
+[FW-D] iter= 29  logdet=6.986761e+01
+[FW-D] iter= 30  logdet=6.966651e+01
+[FW-D] iter= 31  logdet=6.969817e+01
+[FW-D] iter= 32  logdet=6.967143e+01
+[FW-D] iter= 33  logdet=6.963789e+01
+[FW-D] iter= 34  logdet=6.960446e+01
+[FW-D] iter= 35  logdet=6.953560e+01
+[FW-D] iter= 36  logdet=6.941050e+01
+[FW-D] iter= 37  logdet=6.974881e+01
+[FW-D] iter= 38  logdet=7.002316e+01
+[FW-D] iter= 39  logdet=7.026095e+01
+[FW-D] iter= 40  logdet=7.046846e+01
+[FW-D] iter= 41  logdet=7.065157e+01
+[FW-D] iter= 42  logdet=7.081527e+01
+[FW-D] iter= 43  logdet=7.096342e+01
+[FW-D] iter= 44  logdet=7.109772e+01
+[FW-D] iter= 45  logdet=7.122033e+01
+[FW-D] iter= 46  logdet=7.133285e+01
+[FW-D] iter= 47  logdet=7.143605e+01
+[FW-D] iter= 48  logdet=7.153076e+01
+[FW-D] iter= 49  logdet=7.161937e+01
+[FW-D] iter= 50  logdet=7.170130e+01
+[FW-D] iter= 51  logdet=7.177737e+01
+[FW-D] iter= 52  logdet=7.184824e+01
+[FW-D] iter= 53  logdet=7.191400e+01
+[FW-D] iter= 54  logdet=7.197625e+01
+[FW-D] iter= 55  logdet=7.203439e+01
+[FW-D] iter= 56  logdet=7.208894e+01
+[FW-D] iter= 57  logdet=7.214015e+01
+[FW-D] iter= 58  logdet=7.218799e+01
+[FW-D] iter= 59  logdet=7.223373e+01
+[FW-D] iter= 60  logdet=7.227675e+01
+[FW-D] iter= 61  logdet=7.231742e+01
+[FW-D] iter= 62  logdet=7.235583e+01
+[FW-D] iter= 63  logdet=7.239186e+01
+[FW-D] iter= 64  logdet=7.242659e+01
+[FW-D] iter= 65  logdet=7.245946e+01
+[FW-D] iter= 66  logdet=7.249070e+01
+[FW-D] iter= 67  logdet=7.252034e+01
+[FW-D] iter= 68  logdet=7.254863e+01
+[FW-D] iter= 69  logdet=7.257554e+01
+[FW-D] iter= 70  logdet=7.260118e+01
+[FW-D] iter= 71  logdet=7.262549e+01
+[FW-D] iter= 72  logdet=7.264903e+01
+[FW-D] iter= 73  logdet=7.267144e+01
+[FW-D] iter= 74  logdet=7.269287e+01
+[FW-D] iter= 75  logdet=7.271336e+01
+[FW-D] iter= 76  logdet=7.273279e+01
+[FW-D] iter= 77  logdet=7.275174e+01
+[FW-D] iter= 78  logdet=7.276984e+01
+[FW-D] iter= 79  logdet=7.278720e+01
+[FW-D] iter= 80  logdet=7.280385e+01
+[FW-D] iter= 81  logdet=7.281963e+01
+[FW-D] iter= 82  logdet=7.283513e+01
+[FW-D] iter= 83  logdet=7.284997e+01
+[FW-D] iter= 84  logdet=7.286426e+01
+[FW-D] iter= 85  logdet=7.287799e+01
+[FW-D] iter= 86  logdet=7.289124e+01
+[FW-D] iter= 87  logdet=7.290399e+01
+[FW-D] iter= 88  logdet=7.291627e+01
+[FW-D] iter= 89  logdet=7.292800e+01
+[FW-D] iter= 90  logdet=7.293954e+01
+[FW-D] iter= 91  logdet=7.295062e+01
+[FW-D] iter= 92  logdet=7.296132e+01
+[FW-D] iter= 93  logdet=7.297164e+01
+[FW-D] iter= 94  logdet=7.298148e+01
+[FW-D] iter= 95  logdet=7.299121e+01
+[FW-D] iter= 96  logdet=7.300059e+01
+[FW-D] iter= 97  logdet=7.300966e+01
+[FW-D] iter= 98  logdet=7.301842e+01
+[FW-D] iter= 99  logdet=7.302693e+01
+[FW-D] iter=100  logdet=7.303515e+01
+[FW-D] iter=101  logdet=7.304298e+01
+[FW-D] iter=102  logdet=7.305078e+01
+[FW-D] iter=103  logdet=7.305833e+01
+[FW-D] iter=104  logdet=7.306563e+01
+[FW-D] iter=105  logdet=7.307270e+01
+[FW-D] iter=106  logdet=7.307957e+01
+[FW-D] iter=107  logdet=7.308613e+01
+[FW-D] iter=108  logdet=7.309266e+01
+[FW-D] iter=109  logdet=7.309898e+01
+[FW-D] iter=110  logdet=7.310511e+01
+[FW-D] iter=111  logdet=7.311106e+01
+[FW-D] iter=112  logdet=7.311682e+01
+[FW-D] iter=113  logdet=7.312246e+01
+[FW-D] iter=114  logdet=7.312795e+01
+[FW-D] iter=115  logdet=7.313328e+01
+[FW-D] iter=116  logdet=7.313838e+01
+[FW-D] iter=117  logdet=7.314348e+01
+[FW-D] iter=118  logdet=7.314842e+01
+[FW-D] iter=119  logdet=7.315323e+01
+[FW-D] iter=120  logdet=7.315791e+01
+[FW-D] iter=121  logdet=7.316248e+01
+[FW-D] iter=122  logdet=7.316692e+01
+[FW-D] iter=123  logdet=7.317116e+01
+[FW-D] iter=124  logdet=7.317543e+01
+[FW-D] iter=125  logdet=7.317958e+01
+[FW-D] iter=126  logdet=7.318362e+01
+[FW-D] iter=127  logdet=7.318755e+01
+[FW-D] iter=128  logdet=7.319138e+01
+[FW-D] iter=129  logdet=7.319505e+01
+[FW-D] iter=130  logdet=7.319875e+01
+[FW-D] iter=131  logdet=7.320233e+01
+[FW-D] iter=132  logdet=7.320583e+01
+[FW-D] iter=133  logdet=7.320924e+01
+[FW-D] iter=134  logdet=7.321258e+01
+[FW-D] iter=135  logdet=7.321583e+01
+[FW-D] iter=136  logdet=7.321894e+01
+[FW-D] iter=137  logdet=7.322209e+01
+[FW-D] iter=138  logdet=7.322515e+01
+[FW-D] iter=139  logdet=7.322814e+01
+[FW-D] iter=140  logdet=7.323105e+01
+[FW-D] iter=141  logdet=7.323391e+01
+[FW-D] iter=142  logdet=7.323664e+01
+[FW-D] iter=143  logdet=7.323940e+01
+[FW-D] iter=144  logdet=7.324209e+01
+[FW-D] iter=145  logdet=7.324471e+01
+[FW-D] iter=146  logdet=7.324727e+01
+[FW-D] iter=147  logdet=7.324972e+01
+[FW-D] iter=148  logdet=7.325221e+01
+[FW-D] iter=149  logdet=7.325463e+01
+[FW-D] iter=150  logdet=7.325700e+01
+[FW-D] iter=151  logdet=7.325931e+01
+[FW-D] iter=152  logdet=7.326158e+01
+[FW-D] iter=153  logdet=7.326380e+01
+[FW-D] iter=154  logdet=7.326592e+01
+[FW-D] iter=155  logdet=7.326808e+01
+[FW-D] iter=156  logdet=7.327019e+01
+[FW-D] iter=157  logdet=7.327225e+01
+[FW-D] iter=158  logdet=7.327427e+01
+[FW-D] iter=159  logdet=7.327625e+01
+[FW-D] iter=160  logdet=7.327814e+01
+[FW-D] iter=161  logdet=7.328006e+01
+[FW-D] iter=162  logdet=7.328194e+01
+[FW-D] iter=163  logdet=7.328378e+01
+[FW-D] iter=164  logdet=7.328558e+01
+[FW-D] iter=165  logdet=7.328735e+01
+[FW-D] iter=166  logdet=7.328908e+01
+[FW-D] iter=167  logdet=7.329075e+01
+[FW-D] iter=168  logdet=7.329244e+01
+[FW-D] iter=169  logdet=7.329408e+01
+[FW-D] iter=170  logdet=7.329570e+01
+[FW-D] iter=171  logdet=7.329728e+01
+[FW-D] iter=172  logdet=7.329884e+01
+[FW-D] iter=173  logdet=7.330033e+01
+[FW-D] iter=174  logdet=7.330185e+01
+[FW-D] iter=175  logdet=7.330334e+01
+[FW-D] iter=176  logdet=7.330479e+01
+[FW-D] iter=177  logdet=7.330622e+01
+[FW-D] iter=178  logdet=7.330762e+01
+[FW-D] iter=179  logdet=7.330900e+01
+[FW-D] iter=180  logdet=7.331033e+01
+[FW-D] iter=181  logdet=7.331167e+01
+[FW-D] iter=182  logdet=7.331299e+01
+[FW-D] iter=183  logdet=7.331428e+01
+[FW-D] iter=184  logdet=7.331555e+01
+[FW-D] iter=185  logdet=7.331680e+01
+[FW-D] iter=186  logdet=7.331798e+01
+[FW-D] iter=187  logdet=7.331921e+01
+[FW-D] iter=188  logdet=7.332041e+01
+[FW-D] iter=189  logdet=7.332158e+01
+[FW-D] iter=190  logdet=7.332273e+01
+[FW-D] iter=191  logdet=7.332387e+01
+[FW-D] iter=192  logdet=7.332495e+01
+[FW-D] iter=193  logdet=7.332606e+01
+[FW-D] iter=194  logdet=7.332715e+01
+[FW-D] iter=195  logdet=7.332821e+01
+[FW-D] iter=196  logdet=7.332926e+01
+[FW-D] iter=197  logdet=7.333030e+01
+[FW-D] iter=198  logdet=7.333131e+01
+[FW-D] iter=199  logdet=7.333227e+01
+[FW-D] iter=200  logdet=7.333327e+01
+[FW-D] iter=201  logdet=7.333425e+01
+[FW-D] iter=202  logdet=7.333521e+01
+[FW-D] iter=203  logdet=7.333616e+01
+[FW-D] iter=204  logdet=7.333708e+01
+[FW-D] iter=205  logdet=7.333797e+01
+[FW-D] iter=206  logdet=7.333889e+01
+[FW-D] iter=207  logdet=7.333978e+01
+[FW-D] iter=208  logdet=7.334066e+01
+[FW-D] iter=209  logdet=7.334152e+01
+[FW-D] iter=210  logdet=7.334237e+01
+[FW-D] iter=211  logdet=7.334321e+01
+[FW-D] iter=212  logdet=7.334400e+01
+[FW-D] iter=213  logdet=7.334483e+01
+[FW-D] iter=214  logdet=7.334564e+01
+[FW-D] iter=215  logdet=7.334643e+01
+[FW-D] iter=216  logdet=7.334721e+01
+[FW-D] iter=217  logdet=7.334798e+01
+[FW-D] iter=218  logdet=7.334874e+01
+[FW-D] iter=219  logdet=7.334949e+01
+[FW-D] iter=220  logdet=7.335020e+01
+[FW-D] iter=221  logdet=7.335094e+01
+[FW-D] iter=222  logdet=7.335167e+01
+[FW-D] iter=223  logdet=7.335238e+01
+[FW-D] iter=224  logdet=7.335308e+01
+[FW-D] iter=225  logdet=7.335377e+01
+[FW-D] iter=226  logdet=7.335445e+01
+[FW-D] iter=227  logdet=7.335509e+01
+[FW-D] iter=228  logdet=7.335576e+01
+[FW-D] iter=229  logdet=7.335643e+01
+[FW-D] iter=230  logdet=7.335708e+01
+[FW-D] iter=231  logdet=7.335772e+01
+[FW-D] iter=232  logdet=7.335834e+01
+[FW-D] iter=233  logdet=7.335894e+01
+[FW-D] iter=234  logdet=7.335957e+01
+[FW-D] iter=235  logdet=7.336018e+01
+[FW-D] iter=236  logdet=7.336078e+01
+[FW-D] iter=237  logdet=7.336137e+01
+[FW-D] iter=238  logdet=7.336195e+01
+[FW-D] iter=239  logdet=7.336252e+01
+[FW-D] iter=240  logdet=7.336306e+01
+[FW-D] iter=241  logdet=7.336364e+01
+[FW-D] iter=242  logdet=7.336420e+01
+[FW-D] iter=243  logdet=7.336475e+01
+[FW-D] iter=244  logdet=7.336529e+01
+[FW-D] iter=245  logdet=7.336582e+01
+[FW-D] iter=246  logdet=7.336633e+01
+[FW-D] iter=247  logdet=7.336686e+01
+[FW-D] iter=248  logdet=7.336738e+01
+[FW-D] iter=249  logdet=7.336789e+01
+[FW-D] iter=250  logdet=7.336839e+01
+[FW-D] iter=251  logdet=7.336889e+01
+[FW-D] iter=252  logdet=7.336938e+01
+[FW-D] iter=253  logdet=7.336984e+01
+[FW-D] iter=254  logdet=7.337032e+01
+[FW-D] iter=255  logdet=7.337080e+01
+[FW-D] iter=256  logdet=7.337127e+01
+[FW-D] iter=257  logdet=7.337174e+01
+[FW-D] iter=258  logdet=7.337219e+01
+[FW-D] iter=259  logdet=7.337263e+01
+[FW-D] iter=260  logdet=7.337308e+01
+[FW-D] iter=261  logdet=7.337353e+01
+[FW-D] iter=262  logdet=7.337396e+01
+[FW-D] iter=263  logdet=7.337439e+01
+[FW-D] iter=264  logdet=7.337482e+01
+[FW-D] iter=265  logdet=7.337523e+01
+[FW-D] iter=266  logdet=7.337564e+01
+[FW-D] iter=267  logdet=7.337605e+01
+[FW-D] iter=268  logdet=7.337646e+01
+[FW-D] iter=269  logdet=7.337687e+01
+[FW-D] iter=270  logdet=7.337727e+01
+[FW-D] iter=271  logdet=7.337766e+01
+[FW-D] iter=272  logdet=7.337805e+01
+[FW-D] iter=273  logdet=7.337844e+01
+[FW-D] iter=274  logdet=7.337882e+01
+[FW-D] iter=275  logdet=7.337918e+01
+[FW-D] iter=276  logdet=7.337956e+01
+[FW-D] iter=277  logdet=7.337993e+01
+[FW-D] iter=278  logdet=7.338030e+01
+[FW-D] iter=279  logdet=7.338066e+01
+[FW-D] iter=280  logdet=7.338101e+01
+[FW-D] iter=281  logdet=7.338137e+01
+[FW-D] iter=282  logdet=7.338172e+01
+[FW-D] iter=283  logdet=7.338206e+01
+[FW-D] iter=284  logdet=7.338238e+01
+[FW-D] iter=285  logdet=7.338273e+01
+[FW-D] iter=286  logdet=7.338307e+01
+[FW-D] iter=287  logdet=7.338340e+01
+[FW-D] iter=288  logdet=7.338373e+01
+[FW-D] iter=289  logdet=7.338406e+01
+[FW-D] iter=290  logdet=7.338436e+01
+[FW-D] iter=291  logdet=7.338469e+01
+[FW-D] iter=292  logdet=7.338500e+01
+[FW-D] iter=293  logdet=7.338532e+01
+[FW-D] iter=294  logdet=7.338562e+01
+[FW-D] iter=295  logdet=7.338593e+01
+[FW-D] iter=296  logdet=7.338623e+01
+[FW-D] iter=297  logdet=7.338652e+01
+[FW-D] iter=298  logdet=7.338682e+01
+[FW-D] iter=299  logdet=7.338711e+01
+    selected 20 poses in 3.5s  score=7.3380e+01
+/usr/lib/python3/dist-packages/numpy/core/_methods.py:44: RuntimeWarning: invalid value encountered in reduce
+  return umr_minimum(a, axis, None, out, keepdims, initial, where)
+/usr/lib/python3/dist-packages/numpy/core/_methods.py:40: RuntimeWarning: invalid value encountered in reduce
+  return umr_maximum(a, axis, None, out, keepdims, initial, where)
+
+============================================================================================================================================================================
+RESULTS
+Method                   min_eig        logdet     trace_cov  focal_err_px     pp_err_px      dist_err   rot_err_deg  trans_err_cm     train_rms   heldout_rms        time_s
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+greedy-e              2.0367e-01    7.2807e+01    7.5291e+00    9.4412e-01    3.2426e+00    3.2724e-02    1.0536e-01    8.3967e-02    1.3824e+00    3.6681e+00    5.5460e+00
+a-optimal             2.0356e-01    7.2899e+01    7.3897e+00    7.2544e-01    2.0879e+00    1.0115e-02    7.1695e-02    5.6022e-02    1.3809e+00    2.4829e+00    6.1036e+00
+fw-e                  1.9626e-01    7.2643e+01    7.8533e+00    5.9040e-01    2.2061e+00    1.8590e-02    6.8744e-02    5.5780e-02    1.3891e+00    2.5694e+00    4.3161e+00
+fw-a                  1.9626e-01    7.2643e+01    7.8533e+00    5.9040e-01    2.2061e+00    1.8590e-02    6.8744e-02    5.5780e-02    1.3891e+00    2.5694e+00    4.3229e+00
+fw-d                  1.8942e-01    7.3380e+01    7.9200e+00    1.7191e+00    2.2950e+00    6.4708e-03    7.3725e-02    6.6227e-02    1.3982e+00    2.6991e+00    3.4947e+00
+d-optimal             1.8703e-01    7.3425e+01    7.8402e+00    1.7307e+00    2.3089e+00    1.8681e-02    7.5762e-02    6.7336e-02    1.4017e+00    2.7054e+00    5.4175e+00
+random             9.070e-02±2.1e-02 6.970e+01±4.0e-01 1.507e+01±3.0e+00 1.415e+00±9.3e-01 2.607e+00±1.6e+00 3.428e-02±2.7e-02 6.946e-02±2.8e-02 7.188e-02±3.6e-02 1.391e+00±1.4e-02 2.962e+00±1.4e+00    2.2871e+00
+coverage              7.3816e-02    6.8523e+01    1.7949e+01    2.1411e+00    4.9133e+00    7.1601e-02    1.4317e-01    1.4720e-01    1.3847e+00    5.2559e+00    6.0511e-04
+============================================================================================================================================================================
+
+Outputs saved to: results/fresh_20260427/charuco_sigma10/benchmark_20260427_051059
+  benchmark_results.json
+  benchmark_table.csv
+  benchmark_comparison.png

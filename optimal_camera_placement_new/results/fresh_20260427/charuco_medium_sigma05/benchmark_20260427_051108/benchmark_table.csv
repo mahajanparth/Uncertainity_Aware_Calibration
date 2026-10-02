@@ -1,0 +1,9 @@
+method,min_eig,logdet,trace_cov,focal_err_px,pp_err_px,dist_err,rot_err_deg,trans_err_cm,train_rms,heldout_rms,time_s,min_eig_std,logdet_std,trace_cov_std,focal_err_px_std,pp_err_px_std,dist_err_std,rot_err_deg_std,trans_err_cm_std,train_rms_std,heldout_rms_std,time_s_std
+random,3.8066e-01,8.4798e+01,3.5827e+00,6.9973e-01,1.3623e+00,1.4290e-02,3.7376e-02,3.8883e-02,6.9542e-01,1.5268e+00,2.3527e+00,8.6653e-02,5.4938e-01,7.5845e-01,3.6684e-01,9.0565e-01,1.3389e-02,1.4324e-02,2.1444e-02,7.6872e-03,7.6773e-01,nan
+coverage,2.9490e-01,8.3263e+01,4.4203e+00,2.7946e-01,1.4306e+00,3.7640e-03,5.1796e-02,4.6950e-02,6.9505e-01,1.5966e+00,5.2881e-04,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+a-optimal,8.6061e-01,8.7700e+01,1.7284e+00,1.4745e-01,6.4826e-01,6.3688e-03,2.3813e-02,1.9611e-02,6.8590e-01,8.9142e-01,6.5784e+00,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+d-optimal,6.8094e-01,8.8690e+01,2.0145e+00,2.8277e-01,8.3925e-01,9.9166e-03,2.5267e-02,2.3599e-02,6.9068e-01,1.0047e+00,6.5677e+00,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+greedy-e,8.6460e-01,8.7485e+01,1.7700e+00,2.9975e-01,7.4095e-01,1.4530e-02,2.2120e-02,1.8458e-02,6.8660e-01,9.4019e-01,7.7102e+00,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+fw-e,8.9898e-01,8.7776e+01,1.7276e+00,4.4947e-01,4.3060e-01,3.0692e-03,1.9335e-02,1.4194e-02,6.7659e-01,7.5243e-01,4.2891e+00,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+fw-a,8.7801e-01,8.7611e+01,1.7233e+00,2.5108e-01,6.9685e-01,2.4662e-03,2.4279e-02,2.0569e-02,6.8325e-01,9.2359e-01,4.4337e+00,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
+fw-d,5.9393e-01,8.8650e+01,2.2290e+00,2.7833e-01,4.7233e-01,6.8152e-03,2.0698e-02,1.6900e-02,6.8758e-01,7.7248e-01,4.5578e+00,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan
