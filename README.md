@@ -19,7 +19,10 @@ intrinsics, computes the weakest calibration direction, and overlays a **ghost b
 showing where to hold the target next. Coverage, eigenvalue spectrum and residual heatmaps
 update live.
 
-[![Live guided calibration demo (time-lapse)](videos/RealWorldDataCollection_fast.gif)](videos/RealWorldDataCollection.mkv)
+
+https://github.com/user-attachments/assets/5800cc61-33e8-4ac1-9558-11dda4d40255
+
+
 
 *Time-lapse of a full real-world data collection session, sped up about 60×. Click the GIF for the full-length recording,
 [`videos/RealWorldDataCollection.mkv`](videos/RealWorldDataCollection.mkv) (42 min, 1080p, ~670 MB via Git LFS).*
