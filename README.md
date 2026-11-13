@@ -19,9 +19,9 @@ intrinsics, computes the weakest calibration direction, and overlays a **ghost b
 showing where to hold the target next. Coverage, eigenvalue spectrum and residual heatmaps
 update live.
 
-[![Live guided calibration demo (time-lapse)](videos/RealWorldDataCollection_timelapse.gif)](videos/RealWorldDataCollection.mkv)
+[![Live guided calibration demo (time-lapse)](videos/RealWorldDataCollection_fast.gif)](videos/RealWorldDataCollection.mkv)
 
-*Time-lapse of a full real-world data collection session. Click the GIF for the full-length recording,
+*Time-lapse of a full real-world data collection session, sped up about 60×. Click the GIF for the full-length recording,
 [`videos/RealWorldDataCollection.mkv`](videos/RealWorldDataCollection.mkv) (42 min, 1080p, ~670 MB via Git LFS).*
 
 Run it:
@@ -65,14 +65,15 @@ all methods for AprilGrid and ChArUco targets.
 - E-optimality works well at moderate noise with K ≥ 20. Greedy-E has the best focal-length error on AprilGrid at σ = 0.5 and 1.0 px.
 - Training reprojection error is a poor proxy for calibration quality, so we report held-out RMS and grouped parameter errors (ε<sub>f</sub>, ε<sub>pp</sub>, ε<sub>d</sub>, ε<sub>R</sub>, ε<sub>t</sub>).
 
-Full results are in the paper draft (`optimal_camera_placement_new/paper/icra2026_draft.tex`) and in
-`optimal_camera_placement_new/results/`.
+Full results are in the paper draft ([`icra2026_draft.pdf`](icra2026_draft.pdf); source in
+`optimal_camera_placement_new/paper/icra2026_draft.tex`) and in `optimal_camera_placement_new/results/`.
 
 ## Repository Layout
 
 ```
 .
 ├── README.md
+├── icra2026_draft.pdf              # compiled paper draft
 ├── videos/                         # live demo recording + GIF preview (Git LFS)
 └── optimal_camera_placement_new/
     ├── OASIS/                      # FIM, Schur marginalisation, E/A/D criteria, greedy + Frank–Wolfe, analysis/plots

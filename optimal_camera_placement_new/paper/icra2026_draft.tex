@@ -94,7 +94,7 @@ Calibration accuracy in robotic systems depends not only on the backend estimato
 
 We formulate calibration data collection as a certifiable information theoretic experimental design problem. Given a finite pool of candidate views, poses, or motion segments, we select a fixed budget subset using the marginal Fisher information matrix obtained after eliminating nuisance variables. We study E, A, and D optimal design criteria and solve the resulting subset selection problem using greedy methods and Frank Wolfe relaxations, which provide upper bounds and post hoc duality gap certificates for the design surrogate.
 
-We evaluate the framework on camera intrinsic calibration using AprilGrid and ChArUco targets in photorealistic Isaac Sim benchmarks, two real world capture sessions, and both OpenCV and Kalibr backends. Information driven selection consistently outperforms random sampling and geometric heuristics, while training reprojection error is shown to be a poor proxy for calibration quality. Our results show that criterion choice is regime dependent: E optimality performs well for the OpenCV intrinsics benchmark, while A optimality is more robust under high noise, small budgets, and joint bundle adjustment backends such as Kalibr.
+We evaluate the framework on camera intrinsic calibration using AprilGrid and ChArUco targets in Isaac Sim benchmarks, two real world capture sessions, and both OpenCV and Kalibr backends. Information driven selection generally outperforms random sampling and geometric heuristics, while training reprojection error is shown to be a poor proxy for calibration quality. Our results show that criterion choice is regime dependent: E optimality performs well for the OpenCV intrinsics benchmark, while A optimality is more robust under high noise, small budgets, and with the Kalibr backend.
 \end{abstract}
 % \begin{abstract}
 % Calibration is a fundamental pre requisite for robotics systems. Its quality depends not only on the backend estimator, but also on
@@ -230,18 +230,18 @@ In practice, calibration data collection is still often guided by target
 coverage, motion excitation heuristics, or practitioner intuition. These
 strategies are simple and effective in many settings, but they do not explicitly
 measure whether the resulting dataset is informative for parameter recovery.
-Classical calibration pipelines such as Kalibr estimate multi camera and
+Classical calibration pipelines such as Kalibr~\citep{furgale2013kalibr,kalibr_toolbox} estimate multi camera and
 visual inertial calibration parameters from a provided dataset, but they largely
 assume that the dataset has already been collected. Similarly, foundational
-camera calibration methods such as Zhang's planar-pattern formulation provide
+camera calibration methods such as Zhang's planar-pattern formulation~\citep{zhang2000flexible} provide
 practical and influential estimation procedures, but do not address the upstream
 problem of selecting an informative calibration dataset.
 
 Active calibration and next best view methods address this limitation by
-guiding the acquisition process. Systems such as AprilCal and Calibration Wizard
+guiding the acquisition process~\citep{active_calib_1,active_calib_2}. Systems such as AprilCal~\citep{richardson2013aprilcal} and Calibration Wizard~\citep{peng2019calibration}
 recognize that calibration quality depends on the acquired data and therefore
-suggest improved views to the user. More recent methods for pose selection,
-eye in hand calibration, and observability aware trajectory optimization further
+suggest improved views to the user. More recent methods for pose selection~\citep{rojtberg2018efficient},
+eye in hand calibration~\citep{tsai1989new,yang2023nbv}, and observability aware trajectory optimization~\citep{schneider2019observability} further
 reinforce the importance of calibration aware data acquisition. However, these
 methods are typically framed as sequential acquisition procedures based on local
 coverage, visibility, or information gain criteria. They do not generally provide
@@ -253,21 +253,21 @@ candidate calibration views, poses, or motion segments, can we select a
 fixed budget subset whose informativeness can be certified after selection?
 
 We answer this question by casting calibration data collection as an
-information theoretic experimental design problem. Inspired by OASIS, we
+information theoretic experimental design problem. Inspired by OASIS~\citep{kaveti2023oasis}, we
 formulate calibration measurement selection as a subset selection problem over
 candidate views, poses, or motion segments. We construct a marginal calibration
-Fisher information matrix by eliminating nuisance pose variables by Shurs Compliment and study
-E , A , and D optimal design criteria. These objectives capture complementary
+Fisher information matrix by eliminating nuisance pose variables by a Schur complement and study
+E-, A-, and D-optimal design criteria~\citep{oed_book}. These objectives capture complementary
 notions of dataset quality: E optimality strengthens the weakest observable
 parameter direction, A optimality reduces average parameter uncertainty, and
 D optimality maximizes overall information volume.
 
-The resulting subset selection problem is combinatorial and NP hard in general.
-To make the problem practical, we combine greedy selection with Frank Wolfe
-relaxations over the continuous design domain. The Frank Wolfe duality gap
+The resulting subset selection problem is combinatorial and NP hard in general~\citep{civril2009selecting}.
+To make the problem practical, we combine greedy selection~\citep{krause2008near} with Frank Wolfe
+relaxations~\citep{frank1956algorithm,jaggi2013revisiting} over the continuous design domain. The Frank Wolfe duality gap
 provides a post hoc certificate for the relaxed information design problem,
 while exhaustive search on small instances allows us to measure the quality of
-rounded discrete solutions. Importantly, the certificate applies to the
+rounded discrete solutions. The certificate applies only to the
 information theoretic design surrogate, not to the full nonlinear calibration
 pipeline. We therefore treat it as model relative evidence that a dataset is
 informative, and validate its practical value through downstream calibration
@@ -285,7 +285,7 @@ The main contributions of this paper are:
     objectives and exhaustive validation on small discrete instances.
 
     \item We evaluate the framework on AprilGrid and ChArUco calibration
-    benchmarks, photorealistic Isaac Sim simulations, real world camera capture
+    benchmarks, Isaac Sim simulations, real world camera capture
     sessions, and OpenCV and Kalibr backend studies, showing that
     information driven selection outperforms random sampling and geometric
     heuristics.
@@ -452,7 +452,7 @@ closed-form initialization with nonlinear maximum likelihood refinement
 multi camera and visual inertial calibration, supporting spatial and temporal
 calibration with flexible camera models
 \citep{furgale2013kalibr,kalibr_toolbox}. These systems are effective
-estimation backbends, but they primarily operate after the calibration data has
+estimation backends, but they primarily operate after the calibration data has
 already been collected.
 
 A complementary line of work studies calibration through observability and
@@ -508,6 +508,19 @@ certificates. Our work adapts this viewpoint from sensor arrangement for SLAM
 to calibration data design. Rather than certifying a downstream calibration
 solution, we certify the selected calibration views or motion segments with
 respect to an information-based design surrogate.
+
+Our relaxation follows the convex sensor-selection approach of Joshi and Boyd,
+who relax the Boolean selection problem and use the relaxed optimum to bound
+the suboptimality of a rounded design~\citep{joshi2009sensor}.
+Allen-Zhu et al.\ later gave rounding schemes with near-optimal guarantees for
+A-, D-, and E-optimal experimental design~\citep{allenzhu2017near}.
+Greedy selection carries the classical $(1-1/e)$ guarantee only for submodular
+objectives such as $\log\det$; for non-submodular criteria such as E- and
+A-optimality, guarantees depend on the submodularity ratio and curvature of the
+objective~\citep{bian2017guarantees}.
+In SLAM, Khosoussi et al.\ design reliable pose graphs by maximising the
+weighted number of spanning trees, a D-optimality criterion, using greedy and
+convex-relaxation methods with near-optimality certificates~\citep{khosoussi2019reliable}.
 
 \subsection{Targetless and Learning-Based Calibration}
 Targetless and learning-based calibration methods provide another neighboring
@@ -1655,7 +1668,7 @@ $N-K$ views evaluated with estimated intrinsics and ground-truth poses (px).
 \subsection{Setup}
 
 All experiments use a pool of $N = 720$ candidate camera poses generated in
-NVIDIA Isaac Sim around a fixed calibration target, with budget $K = 20$.
+NVIDIA Isaac Sim~\citep{isaacsim} around a fixed calibration target, with budget $K = 20$.
 Both targets are imaged with the \emph{same} normal-FOV pinhole camera
 ($f_x = f_y = 1{,}649$~px, $c_x{=}960$, $c_y{=}540$, hFOV~${\approx}60^\circ$,
 $1920\times1080$, zero distortion ground truth) to ensure a fair comparison.
@@ -1669,13 +1682,14 @@ to enable fair cross-target comparisons:
 \end{itemize}
 Both targets have identical corner count (144), pitch (4.22\,cm), and
 $46.4\times46.4$\,cm corner span, enabling unconfounded cross-target comparison.
-Both boards are generated analytically using the same camera parameters and
-hemisphere geometry; noise is added as i.i.d.\ Gaussian per corner per view.
+For both boards, each candidate view is rendered in Isaac Sim with the same
+camera parameters and hemisphere geometry, and board corners are detected in
+the rendered images; noise is added as i.i.d.\ Gaussian per corner per view.
 Three noise levels are evaluated: near-noiseless ($\sigma = 0.01$~px),
 realistic ($\sigma = 0.5$~px), and high noise ($\sigma = 1.0$~px).
 Distortion robustness experiments additionally apply medium and high
 Brown--Conrady distortion (Section~\ref{subsec:ablations}).
-The downstream calibration backend is the OpenCV calibration routine (OpenCV
+The downstream calibration backend is the OpenCV calibration routine~\citep{opencv_calib} (OpenCV
 Zhang-style) with a neutral focal-length initialization
 $f_0 = 0.7\max(w,h)$ to avoid sensitivity to a bad starting point.
 
@@ -1688,8 +1702,8 @@ Tables~\ref{tab:aprilgrid_sigma05}--\ref{tab:charuco_sigma10} give the full
 eight-method head-to-head comparison on both targets under realistic and high
 noise levels ($\sigma \in \{0.5,\,1.0\}$~px); near-noiseless results are
 discussed in Section~\ref{subsec:ablations}.
-Both boards are generated analytically at $K{=}20$ using the same camera model
-and hemisphere geometry described in Section~\ref{sec:experiments}.
+Both boards are rendered in Isaac Sim, with corners detected in the rendered
+images, using the same camera model and hemisphere geometry described in Section~\ref{sec:experiments}.
 All methods share the same candidate pool and the same downstream calibration
 backend; only the selected $K{=}20$ views differ.
 
@@ -1715,11 +1729,12 @@ Bold outline marks the best non-degenerate deterministic method.}
 \label{fig:heldout_rms_comparison}
 \end{figure}
 
-\paragraph{FW-E leads $\lambda_{\min}$ on AprilGrid; Greedy-E wins calibration accuracy at moderate noise.}
+\paragraph{FW-E leads $\lambda_{\min}$ on AprilGrid; FW-A and Greedy-E win calibration accuracy at moderate noise.}
 At $\sigma{=}0.5$~px, FW-E achieves the highest $\lambda_{\min}$ on AprilGrid
-($0.874$, Table~\ref{tab:aprilgrid_sigma05}; Figure~\ref{fig:tab3_aprilgrid_sigma05}), while Greedy-E achieves the best
-focal-length error ($\epsilon_f{=}0.150$~px), principal-point error
-($\epsilon_{pp}{=}0.530$~px), and held-out reprojection error ($0.830$~px).
+($0.874$, Table~\ref{tab:aprilgrid_sigma05}; Figure~\ref{fig:tab3_aprilgrid_sigma05}). Greedy-E achieves the best
+focal-length error ($\epsilon_f{=}0.150$~px), and FW-A achieves the best
+principal-point error ($\epsilon_{pp}{=}0.489$~px) and held-out reprojection
+error ($0.819$~px), with Greedy-E a close second on both ($0.530$~px and $0.830$~px).
 On matched ChArUco $\sigma{=}0.5$, A-optimal achieves the best
 $\epsilon_f{=}0.191$~px (Table~\ref{tab:charuco_sigma05}; Figure~\ref{fig:tab4_charuco_sigma05}), while Greedy-E
 and A-optimal are tied for $\lambda_{\min}$ ($0.809$).
@@ -1741,9 +1756,10 @@ Greedy-E and A-optimal on AprilGrid ($1.076$~px vs.\ $0.530$~px at $\sigma{=}0.5
 as maximizing log-determinant spreads attention across all directions but does
 not explicitly control the harder-to-constrain principal-point axis.
 On matched ChArUco (Tables~\ref{tab:charuco_sigma05}--\ref{tab:charuco_sigma10}),
-A-optimal achieves the best $\epsilon_f$ at both noise levels
-($0.191$~px at $\sigma{=}0.5$, $0.725$~px at $\sigma{=}1.0$, excluding
-the collapsed FW-E) and the best held-out RMS at $\sigma{=}1.0$~px ($2.483$~px).
+A-optimal achieves the best $\epsilon_f$ at $\sigma{=}0.5$~px ($0.191$~px)
+and the best $\epsilon_{pp}$ and held-out RMS at $\sigma{=}1.0$~px
+($2.088$~px and $2.483$~px); at $\sigma{=}1.0$~px, FW-E and FW-A reach a
+lower $\epsilon_f$ ($0.590$~px vs.\ $0.725$~px).
 Minimizing $\mathrm{trace}(\widetilde{\mathcal I}^{-1})$ balances all
 calibration directions simultaneously, which explains A-optimal's held-out
 advantage; the D-optimal logdet criterion sharpens overall log-variance but
@@ -1765,32 +1781,37 @@ dominates both axes simultaneously.}
 \paragraph{A-optimal wins held-out accuracy at high noise.}
 On AprilGrid $\sigma{=}1.0$ (Table~\ref{tab:aprilgrid_sigma10}; Figure~\ref{fig:tab5_aprilgrid_sigma10}), A-optimal
 achieves the best held-out RMS of $1.782$~px, and also the best
-$\epsilon_{pp}{=}1.242$~px and $\epsilon_R{=}0.048^\circ$.
+$\epsilon_{pp}{=}1.242$~px.
 On matched ChArUco $\sigma{=}1.0$ (Table~\ref{tab:charuco_sigma10}; Figure~\ref{fig:tab6_charuco_sigma10}),
-A-optimal achieves the best held-out RMS of $2.483$~px and
-$\epsilon_f{=}0.725$~px among well-conditioned methods.
+A-optimal achieves the best held-out RMS of $2.483$~px and the best
+$\epsilon_{pp}{=}2.088$~px.
 When the noise floor is large enough to pressure all calibration directions
 simultaneously, minimizing total parameter variance via
 $\mathrm{trace}(\widetilde{\mathcal I}^{-1})$ is the more relevant objective than
 targeting only the minimum eigenvalue.
 
-\paragraph{FIM methods maintain advantage on ChArUco.}
-FIM-based methods consistently outperform random selection on matched ChArUco
-at both noise levels.
+\paragraph{Most FIM methods maintain their advantage on ChArUco.}
+On matched ChArUco, every FIM-based method except Greedy-E outperforms random
+selection on held-out RMS at both noise levels.
 At $\sigma{=}0.5$~px, FW-E and FW-A achieve the best held-out RMS
 ($1.271$~px, Table~\ref{tab:charuco_sigma05}), and A-optimal achieves the
 best $\epsilon_f{=}0.191$~px.
 At $\sigma{=}1.0$~px, A-optimal achieves the best held-out RMS ($2.483$~px)
 and $\epsilon_{pp}{=}2.088$~px (Table~\ref{tab:charuco_sigma10}).
-Random selection ($1.479$~px and $2.962$~px respectively) does not improve
-over FIM methods at either noise level.
+Random selection ($1.479$~px and $2.962$~px respectively) is worse than
+FW-E, FW-A, FW-D, A-optimal, and D-optimal, but better than Greedy-E
+($1.529$~px and $3.668$~px), so greedy E-optimal selection is not reliable
+on this target.
 ChArUco yields worse absolute accuracy than AprilGrid at every noise level
 even with the best deterministic method
 (Table~\ref{tab:charuco_sigma05} vs.\ Table~\ref{tab:aprilgrid_sigma05}),
-which we attribute to the board's centre-symmetric geometry reducing leverage
+which may reflect the board's symmetric layout giving less leverage
 on principal-point estimation (Section~\ref{subsec:ablations}).
 
 \paragraph{Train-RMS is not a reliable quality indicator.}
+Earlier interactive calibration tools already observed that training
+reprojection error says little about calibration accuracy~\citep{richardson2013aprilcal,peng2019calibration};
+our results confirm this for subset selection.
 Across all methods and both targets, train-RMS lies in a narrow band
 regardless of the wide variation in calibration errors
 (Tables~\ref{tab:aprilgrid_sigma05}--\ref{tab:charuco_sigma10}).
@@ -1806,8 +1827,8 @@ necessary.
 Coverage consistently underperforms FIM-based methods as noise
 increases on AprilGrid.
 At $\sigma{=}0.5$~px, Coverage yields $\lambda_{\min}{=}0.307$ versus
-FW-E's $0.874$---a $2.8\times$ gap---and $\epsilon_{pp}{=}1.59$~px versus
-Greedy-E's $0.530$~px (Table~\ref{tab:aprilgrid_sigma05}; Figure~\ref{fig:tab3_aprilgrid_sigma05}).
+FW-E's $0.874$, a $2.8\times$ gap. Its $\epsilon_{pp}$ is $1.59$~px, compared with
+$0.530$~px for Greedy-E (Table~\ref{tab:aprilgrid_sigma05}; Figure~\ref{fig:tab3_aprilgrid_sigma05}).
 The advantage of FIM-based selection over geometric heuristics is consistent
 and grows with noise on AprilGrid.
 
@@ -1822,29 +1843,31 @@ all three design criteria, we sub-sample small candidate pools
 ($N\in\{30,40,50\}$) from the full 720-view AprilGrid noiseless dataset and
 enumerate \emph{all} $\binom{N}{K}$ subsets exhaustively for budgets
 $K\in\{5,6,8\}$, covering up to $5.9{\times}10^6$ subsets per setting.
-For each criterion---E: maximise $\lambda_{\min}$; A: minimise
-$\mathrm{tr}(H^{-1})$; D: maximise $\log\det H$---we record the true integer
+We consider three criteria (E: maximise $\lambda_{\min}$; A: minimise
+$\mathrm{tr}(H^{-1})$; D: maximise $\log\det H$), and for each one we record the true integer
 optimum alongside the Greedy and FW-rounded solutions
 (Table~\ref{tab:exhaustive_comparison}).
 
 \textbf{FW-E is near-optimal, Greedy-E is not.}
 FW-E achieves the true E-optimal within $0$--$2.5\%$ across all five settings,
-whereas Greedy-E falls $7$--$19\%$ short---a substantial gap that grows with
+whereas Greedy-E falls $7$--$19\%$ short, and this gap grows with
 budget $K$ (see $(30,8)$: Greedy-E $19\%$ below optimum, FW-E only $2.5\%$).
 Greedy-D and the FW-rounded D-criterion both find the exact D-optimal solution
 in every case, reflecting the near-convexity of the $\log\det$ landscape.
-In all cases the continuous-relaxation value (``Relax'' column) equals or
-exceeds the true integer optimum, confirming it provides a valid upper-bound
-certificate on solution quality.
+For E and D, the continuous-relaxation value (``Relax'' column) equals or
+exceeds the true integer optimum in every setting, as a valid bound must.
+For A (a minimisation), the relaxation value should lie at or below the
+integer optimum; this holds in three of five settings but not at $(50,5)$
+and $(30,8)$, where the reported value exceeds the optimum. These two A
+entries therefore are not valid bounds, most likely because FW-A had not
+converged within the iteration budget.
 
-A key implementation fix was replacing the Linear Minimization Oracle (LMO)
-from an LP solver (\texttt{scipy.linprog}) with a closed-form top-$K$
-selection.
-With FIM weights $\sim10^{18}$, the gradient magnitudes are $\sim10^{18}$,
-causing \texttt{linprog} to stall indefinitely.
-The LMO for the budget constraint $\sum u_i \leq K$, $u\in[0,1]^N$ has a
-closed-form solution --- pick the $K$ indices with the most negative gradient
---- reducing per-iteration LMO cost from $O(N^3)$ (LP) to $O(N\log K)$.
+\paragraph{Implementation note.}
+We solve the linear oracle in closed form rather than with a generic LP solver.
+Because the FIM entries reach ${\sim}10^{18}$, the gradients have the same
+scale and an LP solver (\texttt{scipy.linprog}) fails to converge.
+Over the capped simplex $\{u\in[0,1]^N : \sum_i u_i = K\}$, the oracle simply
+selects the $K$ largest gradient entries, which costs $O(N\log K)$ per iteration.
 
 
 \begin{table}[!t]
@@ -1855,7 +1878,7 @@ For each $(N,K,\text{criterion})$ triple we enumerate all $\binom{N}{K}$ subsets
 and compare the true integer optimum against Greedy and FW-rounded solutions.
 E: max $\lambda_{\min}$; A: min $\mathrm{tr}(H^{-1})$; D: max $\log\det H$.
 ``Gap\,\%'' $=$ relative deviation from the true optimum.
-``Relax'': FW continuous-relaxation upper bound.
+``Relax'': FW continuous-relaxation value (an upper bound for E and D and a lower bound for A at convergence).
 Values rounded to 3 significant figures.}
 \label{tab:exhaustive_comparison}
 \tiny
@@ -1936,31 +1959,29 @@ FIM information metrics ($\lambda_{\min}$, $\log\det$) are computed using
 the bootstrap intrinsics as the linearisation point.
 The random baseline averages 25 independent $K{=}20$ draws from the candidate pool.
 
-\paragraph{Session 3: honest evaluation with fixed held out poses.}
+\paragraph{Session 3: evaluation with fixed held-out poses.}
 To further stress test the held out metric, we collected a second real world
 session on an Intel RealSense D435 (Session~3) using a modified pose bank that adds strong perspective
 tilts ($\pm30$--$45^\circ$ effective yaw/pitch) and three distinct capture
 depths, yielding $N{=}66$ candidate frames after filtering ($K{=}20$,
 20 held out frames).
-Critically, held out poses are estimated \emph{once} using all frame
-intrinsics and held fixed across all selection methods, removing the
+Here, held-out poses are estimated \emph{once} using intrinsics calibrated
+on all frames and held fixed across all selection methods, removing the
 per method pose refitting that would otherwise mask intrinsic
 quality differences.
-Under this honest evaluation (Table~\ref{tab:real_world_session3}),
-held out RMS (net of the $0.8$\,px detector noise floor) is
+Under this held-out evaluation (Table~\ref{tab:real_world_session3}),
+held out RMS is
 $0.74$\,px for A-optimal, $0.77$\,px for Greedy-E, versus
-$1.96$\,px for random --- a $2.6\times$ improvement placing FIM selection
-comfortably below the sub-pixel threshold.
-Coverage ($1.38$\,px) again trails random ($1.96$\,px), consistent with the
-simulation finding that geometric heuristics do not align with FIM observability
-(Figure~\ref{fig:view_diversity}).
+$1.96$\,px for random, a $2.6\times$ reduction.
+Coverage ($1.38$\,px) improves on random and on the D-optimal methods
+($1.61$\,px) in this session, but remains behind the E- and A-optimal
+methods ($0.74$--$1.18$\,px; Figure~\ref{fig:view_diversity}).
 
 \begin{table}[ht]
 \centering
 \caption{Session~3 real-world validation (OpenCV intrinsics benchmark with held-out evaluation).
 $9{\times}7$ ChArUco, $1280{\times}720$\,px.
 $N{=}66$ candidates; 20 held-out frames fixed across all methods.
-Held-out RMS is net of the $0.8$\,px detector-noise floor (raw held-out $-\,0.8$\,px).
 Bold: best per column.}
 \label{tab:real_world_session3}
 \scriptsize
@@ -2025,7 +2046,7 @@ A-optimal and D-optimal select geometrically diverse views covering different di
 
 The results above use the OpenCV calibration routine as the downstream solver.
 To test whether the ordering of methods changes under a different backend, we
-repeat the budget sweep using Kalibr~\citep{furgale2013kalibr} --- an
+repeat the budget sweep using Kalibr~\citep{furgale2013kalibr}, an
 industrial bundle-adjustment solver that builds a factor graph over all
 selected views and refines intrinsics jointly with extrinsics using AprilTag detections.
 
@@ -2039,13 +2060,17 @@ container; Kalibr's estimated intrinsics are used with a standard pose solver
 against ground-truth poses to compute held-out RMS.
 \paragraph{Results.}
 Table~\ref{tab:kalibr_sweep} reports held-out RMS across all four budgets.
-A-optimal achieves the lowest held-out RMS at every budget, ranging from
-$0.090$\,px ($K{=}20$) to $0.162$\,px ($K{=}10$).
-Greedy-E and FW-E are the worst-performing methods at all budgets, with
-held-out RMS $4$--$8\times$ worse than A-optimal, despite maximising
+A-optimal achieves the lowest held-out RMS at $K\in\{20,50,80\}$
+($0.090$--$0.100$\,px); at $K{=}10$, FW-D is best ($0.111$\,px) and
+A-optimal reaches $0.162$\,px.
+Greedy-E is the worst or second-worst method at every budget, with
+held-out RMS $4$--$8\times$ that of A-optimal, despite maximising
 $\lambda_{\min}(\widetilde{\mathcal{I}}_\theta)$.
-This ordering is the reverse of the FIM metric itself, where Greedy-E and
-FW-E lead.
+FW-E is similarly poor at $K\le20$ ($0.76$--$0.77$\,px) but recovers to
+the level of random at $K\ge50$.
+FW-A, which targets the same criterion as A-optimal, is much worse than
+greedy A-optimal ($0.24$--$0.31$\,px), so the advantage appears tied to the
+greedy A-optimal selection rather than to the trace criterion alone.
 
 \paragraph{Why Greedy-E fails with Kalibr.}
 E-optimal selection maximises $\lambda_{\min}(\widetilde{\mathcal{I}}_\theta)$
@@ -2060,14 +2085,15 @@ near-identical views leave the pose subspace near rank-deficient and the
 solver converges to a degenerate solution despite a high $\lambda_{\min}$ score.
 A-optimal selection instead minimises $\operatorname{tr}(\widetilde{\mathcal{I}}_\theta^{-1})$,
 penalising poorly constrained parameter directions and selecting views that
-collectively cover the hemisphere --- matching what Kalibr's bundle-adjustment
-requires for well-conditioned joint optimisation (Figure~\ref{fig:isaac_diversity}).
-The practical takeaway is that E-optimality is a sound selection criterion
-in our OpenCV intrinsics benchmark, where per-view target poses behave like
-independent nuisance variables and the downstream optimisation stays close to
-the linearised Fisher model. A trace-based criterion (A-optimality) is
-preferable when the solver relies on geometric diversity across the full
-view sphere, as Kalibr does.
+collectively cover the hemisphere. This is what Kalibr's bundle adjustment
+needs for a well-conditioned joint optimisation (Figure~\ref{fig:isaac_diversity}).
+Both OpenCV and Kalibr jointly refine intrinsics and per-view extrinsics,
+so this difference is not explained by the problem structure alone; it more
+likely comes from the pipeline (Kalibr's own detection, initialisation, and
+outlier handling), which is less forgiving of clustered views than the
+linearised Fisher model assumes. The practical takeaway is empirical:
+E-optimality works well with our OpenCV benchmark, while greedy A-optimality
+is the safer choice with Kalibr.
 
 
 
@@ -2085,19 +2111,16 @@ for a given calibration pipeline.
 The surrogate FIM used in this work marginalises out per-view nuisance poses
 via a Schur complement, yielding a $p{\times}p$ calibration information matrix
 $\widetilde{\mathcal{I}}_\theta$ (via Schur complement of the joint FIM).
-This model most faithfully represents backends like our OpenCV intrinsics
-benchmark, where each image contributes its own nuisance pose block and the
-optimisation remains close to the local linearised model. In this regime,
+This model matches any backend that jointly refines intrinsics and
+per-view poses, including both OpenCV and Kalibr. In practice, however, the
+two backends respond differently to the same selections. With our OpenCV
+intrinsics benchmark, which stays close to the local linearised model,
 E-optimality directly strengthens the weakest observable intrinsic direction,
 and FW-E or Greedy-E should be preferred at $K{\ge}20$.
-\emph{Joint bundle-adjustment} solvers (e.g., Kalibr) must simultaneously
-recover intrinsics and per-view extrinsics.
-Their effective Hessian couples intrinsic and extrinsic blocks; they require
-angular hemisphere diversity to keep the pose subspace full-rank.
-A-optimality --- which penalises all poorly-constrained directions of
-$\widetilde{\mathcal{I}}_\theta^{-1}$ --- incidentally selects geometrically
-diverse views and provides better conditioning for these solvers.
-\textbf{Rule: use A-optimal for joint BA solvers; use E-optimal for OpenCV-style intrinsics benchmarks only when the problem stays close to the linearised Fisher model.}
+With Kalibr, clustered E-optimal selections degrade badly, while greedy
+A-optimal selections, which spread over the view hemisphere, give the lowest
+held-out error at $K\ge20$.
+\textbf{Rule: use greedy A-optimal with Kalibr-style pipelines; use E-optimal with OpenCV-style intrinsics benchmarks when the problem stays close to the linearised Fisher model.}
 
 \paragraph{Axis 2: What is the noise regime?}
 \begin{itemize}[leftmargin=1.5em]
@@ -2143,8 +2166,8 @@ diverse views and provides better conditioning for these solvers.
 ``OpenCV-style'' = our intrinsics benchmark using the OpenCV calibration routine,
 where per-view target poses are treated as nuisance variables in the surrogate
 and the optimisation remains close to the linearised Fisher model.
-``Joint BA'' = solver jointly refines intrinsics and extrinsics across all
-views (e.g., Kalibr). $\sigma$ denotes per-corner localisation noise.}
+``Joint BA'' = Kalibr-style pipelines (both backends refine intrinsics
+and extrinsics jointly; the split reflects observed behaviour). $\sigma$ denotes per-corner localisation noise.}
 \label{tab:criterion_guide}
 \scriptsize
 \setlength{\tabcolsep}{5pt}
@@ -2187,40 +2210,44 @@ subset-selection problem to a tractable optimisation over three classical
 criteria: E-optimality (maximising the minimum eigenvalue), A-optimality
 (minimising total parameter variance), and D-optimality (maximising
 log-determinant).
-Greedy selection provides practical solutions with well-understood
-approximation guarantees, while Frank--Wolfe relaxations supply post-hoc
-duality-gap certificates for the continuous design problem and recover
-discrete solutions within $2.5\%$ of the true E-optimum, exactly for
-D-optimality, and within $10.6\%$ for A-optimality on tractable instances.
+Greedy selection provides practical solutions, with the classical
+$(1-1/e)$ approximation guarantee holding only for the submodular D-criterion~\citep{krause2008near,bian2017guarantees},
+while Frank--Wolfe relaxations supply post-hoc duality-gap certificates for the
+continuous design problem. On small noiseless instances that can be solved
+exhaustively, FW recovers discrete solutions within $2.5\%$ of the true
+E-optimum, exactly for D-optimality, and within $10.6\%$ for A-optimality.
 
-Across photorealistic Isaac Sim benchmarks spanning two calibration targets
+Across Isaac Sim benchmarks spanning two calibration targets
 (AprilGrid and ChArUco), three corner-noise levels, two distortion regimes,
 and view budgets from $K{=}5$ to $K{=}50$, information-driven selection
-consistently outperforms random sampling and geometric heuristics in both
-FIM quality and downstream calibration accuracy.
-Real-world validation on physical cameras confirms that the same ordering
-holds outside simulation.
-A key finding is that training reprojection error is a poor proxy for true
+generally outperforms random sampling and geometric heuristics in both
+FIM quality and downstream calibration accuracy; the main exception is
+Greedy-E on ChArUco, which falls behind random on held-out error.
+Real-world sessions on two physical cameras show the same broad advantage
+of FIM-based selection over random sampling, although the ordering among
+the FIM methods differs between sessions.
+Consistent with earlier observations~\citep{richardson2013aprilcal,peng2019calibration},
+training reprojection error is a poor proxy for true
 calibration quality: methods that minimise training residuals do not
 necessarily minimise held-out reprojection error or parameter uncertainty.
 
 Our results further reveal that the best design criterion is
 regime-dependent.
 E-optimality is effective in our OpenCV intrinsics benchmark at
-moderate noise and sufficient budget ($K{\ge}20$), where per-view target
-poses behave like independent nuisance variables and maximising the weakest
-observable direction directly improves focal-length and distortion recovery.
+moderate noise and sufficient budget ($K{\ge}20$), where maximising the weakest observable direction directly improves
+focal-length and distortion recovery.
 A-optimality is the more robust default: it reduces total marginal variance,
-tolerates high corner noise, succeeds at small budgets, and --- critically
---- matches what joint bundle-adjustment solvers such as Kalibr require,
-because minimising $\operatorname{tr}(\widetilde{\mathcal{I}}^{-1}_\theta)$
-naturally promotes geometric diversity across the view hemisphere.
+tolerates high corner noise, and succeeds at small budgets. Greedy
+A-optimal selection also gives the lowest held-out error with Kalibr at
+$K{\ge}20$, where its more diverse view sets avoid the degradation seen
+with clustered E-optimal selections.
 
 Together, these findings support treating calibration as a certifiable data
 design problem: the collected dataset can be assessed for informativeness
-\emph{before} running the estimator, the certificate is backend-agnostic,
-and the practical criterion choice can be made from three interpretable axes
---- solver type, noise level, and view budget.
+\emph{before} running the estimator, the certificate is computed from the
+information surrogate alone (although, as the Kalibr results show, how much it
+helps downstream depends on the backend), and the practical criterion choice can be made from three interpretable factors:
+solver type, noise level, and view budget.
 We hope this perspective encourages future calibration pipelines to incorporate
 information-driven selection as a first-class step alongside detection,
 initialisation, and nonlinear refinement.
@@ -2228,10 +2255,12 @@ initialisation, and nonlinear refinement.
 \bibliographystyle{ieeetr}
 \bibliography{references}
 
+\clearpage
 \appendix
-\section*{Appendix: Ablation Studies and Full Results Tables}
+\section{Ablation Studies and Full Results}
+\label{sec:appendix}
 
-\subsection*{Main-Body Tables (moved here for double-column layout)}
+\subsection{Main Simulation Results}
 
 \begin{table*}[t]
 \centering
@@ -2239,8 +2268,8 @@ initialisation, and nonlinear refinement.
 \caption{AprilGrid, realistic noise ($\sigma{=}0.5$~px). $N{=}720$, $K{=}20$.
 Focal/PP errors in pixels, distortion error unitless.}
 \label{tab:aprilgrid_sigma05}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2253,7 +2282,7 @@ D-optimal & $0.691$ & $\mathbf{85.9}$ & $1.997$ & $0.202$ & $1.076$ & $4.42\!\ti
 Random (mean) & $0.359$ & $82.1$ & $3.801$ & $0.753$ & $1.706$ & $0.025$ & $0.696$ & $1.866$ \\
 Coverage & $0.307$ & $81.7$ & $4.287$ & $0.278$ & $1.586$ & $0.030$ & $0.702$ & $1.733$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -2270,8 +2299,8 @@ Coverage & $0.307$ & $81.7$ & $4.287$ & $0.278$ & $1.586$ & $0.030$ & $0.702$ & 
 \caption{Matched ChArUco board ($13{\times}13$, 144\,pts, 46\,cm), realistic noise ($\sigma{=}0.5$~px). $N{=}720$, $K{=}20$.
 Focal/PP errors in pixels, distortion error unitless.}
 \label{tab:charuco_sigma05}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2284,7 +2313,7 @@ D-optimal & $0.741$ & $\mathbf{85.9}$ & $1.975$ & $0.864$ & $1.150$ & $9.36\!\ti
 Random (mean) & $0.356$ & $82.1$ & $3.833$ & $0.707$ & $1.302$ & $0.017$ & $0.696$ & $1.479$ \\
 Coverage & $0.288$ & $80.9$ & $4.574$ & $1.077$ & $2.458$ & $0.036$ & $0.692$ & $2.627$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -2301,8 +2330,8 @@ Coverage & $0.288$ & $80.9$ & $4.574$ & $1.077$ & $2.458$ & $0.036$ & $0.692$ & 
 \caption{AprilGrid, $\sigma{=}1.0$~px noise. $N{=}720$, $K{=}20$.
 Focal/PP errors in pixels, distortion error unitless.}
 \label{tab:aprilgrid_sigma10}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2315,7 +2344,7 @@ D-optimal & $0.174$ & $\mathbf{73.4}$ & $7.921$ & $0.405$ & $2.157$ & $\mathbf{8
 Random (mean) & $0.091$ & $69.7$ & $14.9$ & $1.511$ & $3.417$ & $0.050$ & $1.392$ & $3.736$ \\
 Coverage & $0.078$ & $69.2$ & $16.8$ & $0.551$ & $3.232$ & $0.062$ & $1.405$ & $3.528$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -2332,8 +2361,8 @@ Coverage & $0.078$ & $69.2$ & $16.8$ & $0.551$ & $3.232$ & $0.062$ & $1.405$ & $
 \caption{Matched ChArUco board ($13{\times}13$, 144\,pts, 46\,cm), $\sigma{=}1.0$~px noise. $N{=}720$, $K{=}20$.
 Focal/PP errors in pixels, distortion error unitless.}
 \label{tab:charuco_sigma10}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2346,7 +2375,7 @@ D-optimal & $0.187$ & $\mathbf{73.4}$ & $7.840$ & $1.731$ & $2.309$ & $0.019$ & 
 Random (mean) & $0.091$ & $69.7$ & $15.1$ & $1.415$ & $2.607$ & $0.034$ & $1.391$ & $2.962$ \\
 Coverage & $0.074$ & $68.5$ & $17.9$ & $2.141$ & $4.913$ & $0.072$ & $1.385$ & $5.256$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -2381,7 +2410,6 @@ FW-E       & $0.772$ & $0.761$ & $0.205$ & $0.213$ \\
 \end{tabular}
 \end{table}
 
-\renewcommand{\thesubsection}{6.0}
 \subsection{Ablation Studies}
 \label{subsec:ablations}
 
@@ -2421,15 +2449,15 @@ Figure~\ref{fig:isaac_diversity} further shows that this criterion dependence is
     are well-conditioned; differences are within solver-convergence noise.
     \item \textbf{$\sigma{=}0.5$~px:} FW-E wins $\lambda_{\min}$ on AprilGrid
     ($0.874$); Greedy-E and A-optimal are tied on matched ChArUco ($0.809$).
-    Greedy-E wins $\epsilon_f$, $\epsilon_{pp}$, and held-out RMS on AprilGrid
-    ($0.150$~px, $0.530$~px, $0.830$~px); A-optimal wins $\epsilon_f$ on ChArUco
-    ($0.191$~px).
+    Greedy-E wins $\epsilon_f$ on AprilGrid ($0.150$~px) and FW-A wins
+    $\epsilon_{pp}$ and held-out RMS ($0.489$~px, $0.819$~px); A-optimal wins
+    $\epsilon_f$ on ChArUco ($0.191$~px).
     \item \textbf{$\sigma{=}1.0$~px:} A-optimal wins held-out RMS on
-    AprilGrid ($1.782$~px) and ChArUco ($2.483$~px, excluding collapsed FW-E).
-    Greedy-E wins $\epsilon_f$ on AprilGrid ($0.260$~px); A-optimal wins
-    $\epsilon_f$ on ChArUco ($0.725$~px). FW-E collapses on ChArUco
-    ($\lambda_{\min}{=}0.0184$); Greedy-E and A-optimal achieve
-    $\lambda_{\min}{=}0.204$.
+    AprilGrid ($1.782$~px) and ChArUco ($2.483$~px).
+    Greedy-E wins $\epsilon_f$ on AprilGrid ($0.260$~px); FW-E and FW-A win
+    $\epsilon_f$ on ChArUco ($0.590$~px). Greedy-E and A-optimal achieve the
+    highest $\lambda_{\min}$ on ChArUco ($0.204$), slightly above FW-E and
+    FW-A ($0.196$).
 \end{itemize}
 
 \paragraph{Target type.}
@@ -2438,67 +2466,66 @@ Both targets are matched in corner count, pitch, and physical extent
 target geometry (inner-corner vs.\ outer-corner) from board size effects.
 AprilGrid consistently achieves lower held-out RMS than matched ChArUco with
 the best deterministic method at each noise level: near-noiseless
-($1.52\!\times\!10^{-2}$~px vs.\ $1.80\!\times\!10^{-2}$~px),
-$\sigma{=}0.5$~px ($0.830$~px vs.\ $1.271$~px),
+($1.52\!\times\!10^{-2}$~px vs.\ $2.25\!\times\!10^{-2}$~px),
+$\sigma{=}0.5$~px ($0.819$~px vs.\ $1.271$~px),
 and $\sigma{=}1.0$~px ($1.782$~px vs.\ $2.483$~px).
 The outer-corner layout of AprilGrid tags is more precisely localizable in the
 projection model, yielding a better-conditioned FIM.
-Conversely, ChArUco's inner-corner geometry supports more uniform image-plane
-sampling; random selection exploits this more effectively than FIM-based
-methods on held-out accuracy at both noise levels
+On ChArUco, random selection beats Greedy-E on held-out accuracy at both
+noise levels but remains behind the other FIM-based methods
 (Tables~\ref{tab:charuco_sigma05}--\ref{tab:charuco_sigma10}).
 
 \paragraph{Subset budget $K$.}
-Tables~\ref{tab:ksweep_aprilgrid_noiseless}, \ref{tab:ksweep_aprilgrid_sigma05},
-and~\ref{tab:ksweep_charuco_sigma05} report $\lambda_{\min}$ across
-$K\in\{5,10,15,20,30,50,100,200\}$ on three representative configurations
-($N{=}720$ throughout), and Figure~\ref{fig:ksweep_mineig} visualises the same
-trend.
+Figure~\ref{fig:ksweep_mineig} reports $\lambda_{\min}$ across
+$K\in\{5,10,15,20,30,40,50\}$ for all six standard configurations
+($N{=}720$ throughout), and
+Tables~\ref{tab:ksweep_aprilgrid_noiseless}--\ref{tab:ksweep_charuco_sigma10}
+report the corresponding calibration errors.
 In several K-sweep settings, the FW-rounded A- or D-optimal solutions coincide
 exactly with the corresponding greedy discrete solutions, so some appendix rows
 are intentionally numerically identical rather than copy errors.
 
-\noindent\textbf{Diminishing returns.}
-The marginal gain in $\lambda_{\min}$ per additional pose decreases as $K$
-grows.
-On ChArUco $\sigma{=}0.5$, A-optimal delivers $\lambda_{\min}{=}0.190$ at
-$K{=}5$ but only ${\approx}0.010$ per additional pose in the
-$K{=}100\!\to\!200$ range---an $18\times$ drop in per-pose efficiency.
-The practical ``knee'' lies around $K{=}20$--$30$: beyond 30 frames, each
-additional view adds less than $2\%$ of the cumulative gain already achieved.
+\noindent\textbf{Information grows linearly; accuracy saturates.}
+Because information adds across views, $\lambda_{\min}$ of the FIM-based
+selections grows roughly linearly in $K$: on ChArUco $\sigma{=}0.5$,
+A-optimal gains $0.035$--$0.044$ per additional pose over the whole range
+$K{=}5$--$50$ ($0.190$ at $K{=}5$, $1.859$ at $K{=}50$).
+Diminishing returns appear instead in calibration accuracy: held-out RMS and
+intrinsic errors drop sharply up to $K{\approx}20$ and level off beyond that
+(Figures~\ref{fig:ksweep_heldout} and~\ref{fig:ksweep_calib_errors}).
 
 \noindent\textbf{FW-E rounding instability at small $K$.}
-FW-E fails at small $K$ on all three configurations.
-On AprilGrid $\sigma{=}0.5$, FW-E collapses at $K{=}5$ ($1.11\!\times\!10^{-3}$)
-and $K{=}10$ ($0.073$) before recovering at $K{\ge}15$.
-On ChArUco $\sigma{=}0.5$, FW-E collapses at $K{=}5$ ($1.77\!\times\!10^{-3}$)
-and $K{=}15$ ($2.34\!\times\!10^{-3}$), but achieves the best $\lambda_{\min}$
-at $K{=}10$ ($0.429$) before the $K{=}15$ re-collapse.
-On near-noiseless AprilGrid, FW-E collapses at $K{=}5$ ($1.16\!\times\!10^{-3}$)
-but recovers at $K{\ge}10$ and leads from $K{\ge}15$.
-In all cases the mechanism is the same: at small $K$, each candidate receives
-initial weight $K/N{\approx}0.007$--$0.021$, the continuous relaxation remains
-near-flat, and top-$K$ rounding assembles a poor discrete set.
+FW-E fails at $K{=}5$ in all six configurations, with
+$\lambda_{\min}{\approx}2\!\times\!10^{-3}$ (e.g., $1.77\!\times\!10^{-3}$ on
+AprilGrid and ChArUco $\sigma{=}0.5$), and recovers from $K{=}10$ onward.
+On ChArUco $\sigma{=}0.5$ it then achieves the best $\lambda_{\min}$ at
+$K{=}10$ ($0.429$).
+FW-A shows the same failure on ChArUco, at $K{=}5$ and $K{=}10$
+($2.23\!\times\!10^{-3}$ and $0.029$ at $\sigma{=}0.5$), and recovers at $K{\ge}15$.
+We attribute these failures to naive top-$K$ rounding of a relaxation that has
+not concentrated on a small support; with initial weights $K/N{\approx}0.007$,
+the rounded set at small $K$ can miss the directions needed to keep $H$ well
+conditioned.
 
 \noindent\textbf{A-optimal leads at small-to-medium $K$ under noise.}
-On AprilGrid $\sigma{=}0.5$, A-optimal leads all methods at $K{=}5$--$15$
-($0.222$, $0.437$, $0.652$) and is surpassed only by FW-E at $K{\ge}20$.
+On AprilGrid $\sigma{=}0.5$, A-optimal leads or ties for the lead at
+$K{=}5$--$15$ ($0.222$, $0.437$, $0.652$; FW-A reaches $0.654$ at $K{=}15$)
+and is overtaken by FW-E from $K{=}20$.
 On ChArUco $\sigma{=}0.5$, Greedy-E leads at $K{=}5$ ($0.197$ vs.\
 A-optimal $0.190$), and A-optimal leads at $K{=}15$ ($0.618$ vs.\ $0.613$).
 By balancing all eigenvalues of $H_{\mathrm{cal}}$, A-optimal avoids the
 early pose-clustering that limits Greedy-E and the near-flat-relaxation
 failure that prevents FW-E from converging at small $K$.
-On noiseless AprilGrid, A-optimal leads at $K{=}5$ ($451$ vs.\ Greedy-E $428$)
-but is overtaken by Greedy-E at $K{=}10$ ($1.04\!\times\!10^{3}$
-vs.\ $1.01\!\times\!10^{3}$) and by FW-E from $K{\ge}15$.
+On noiseless AprilGrid, FW-A leads at $K{=}5$ ($539$, vs.\ A-optimal $451$
+and Greedy-E $428$) and at $K{=}10$--$15$, and FW-E leads from $K{=}20$.
 
 \noindent\textbf{FW-E and Greedy-E lead at large budgets.}
 At $K{\ge}20$ on both noisy configurations, FW-E and Greedy-E converge to
 nearly identical $\lambda_{\min}$ (e.g., $0.874$ vs.\ $0.842$ at $K{=}20$ on
 AprilGrid $\sigma{=}0.5$, within $3.7\%$) and both substantially outperform
-D-optimal ($0.691$) and random ($0.346$) at the same budget.
-At large budgets, D-optimal remains well above random under noise ---
-$\lambda_{\min}{=}3.10$ vs.\ random $2.00$ at $K{=}100$ on AprilGrid $\sigma{=}0.5$ ---
+D-optimal ($0.691$) and random ($0.359$) at the same budget.
+At the largest tested budget, D-optimal remains well above random under noise
+($\lambda_{\min}{=}1.77$ vs.\ random $0.94$ at $K{=}50$ on AprilGrid $\sigma{=}0.5$)
 and does \emph{not} regress below the baseline at any tested $K$.
 
 \begin{figure}[t]
@@ -2506,17 +2533,18 @@ and does \emph{not} regress below the baseline at any tested $K$.
 \includegraphics[width=\linewidth]{fig_ksweep_mineig}
 \caption{$\lambda_{\min}(H_\mathrm{cal})$ vs.\ frame budget $K$ for the three
 configurations in Tables~\ref{tab:ksweep_aprilgrid_noiseless}, \ref{tab:ksweep_aprilgrid_sigma05}, and~\ref{tab:ksweep_charuco_sigma05} (log scale).
-FW-E leads consistently from $K{\ge}20$ on AprilGrid; A-Opt leads at
-$K{\le}15$ under noise. Degenerate FW-E points at small $K$ are visible as
-low outliers.}
+FW-E leads consistently from $K{\ge}20$ on AprilGrid; A-Opt leads or ties at
+$K{\le}15$ under noise. Degenerate FW-E (and, on ChArUco, FW-A) points at
+small $K$ are visible as low outliers.}
 \label{fig:ksweep_mineig}
 \end{figure}
 
 \paragraph{Full calibration metrics vs.\ budget $K$.}
-Tables~\ref{tab:ksweep_aprilgrid_noiseless}--\ref{tab:ksweep_charuco_sigma10} extend the $\lambda_{\min}$ sweep above with
-$\lambda_{\min}$, held-out RMS, and intrinsic error trends across a wide budget range.
-The per-method held-out set grows as $K$ decreases, providing a stringent
-out-of-sample test without any fixed split.
+Tables~\ref{tab:ksweep_aprilgrid_noiseless}--\ref{tab:ksweep_charuco_sigma10} complement the $\lambda_{\min}$ sweep above with
+held-out RMS and intrinsic error trends for $K{=}5$--$50$.
+Held-out RMS is computed on all $N{-}K$ unselected frames of each method, so
+the held-out set differs between methods and grows as $K$ decreases; these
+values are therefore indicative rather than a matched comparison.
 Figures~\ref{fig:ksweep_heldout} and~\ref{fig:ksweep_calib_errors} summarise
 the held-out RMS and intrinsic-parameter errors visually.
 
@@ -2548,17 +2576,12 @@ ensuring sufficient exploration of the relaxation before rounding
 The duality gap $\delta$ decreases as $O(1/k)$ and requires ${\gg}300$
 iterations to reach the $10^{-4}$ threshold from typical starting values
 $\delta{\approx}3$--$9$; the 300-step cap is therefore the effective terminator.
-At $\sigma{=}1.0$~px on matched ChArUco, FW-E collapses to
-$\lambda_{\min}{=}0.0184$ and held-out RMS~$=10.5$~px despite completing
-300 iterations (Table~\ref{tab:fw_convergence}).
-The near-flat FIM landscape at high noise prevents the continuous relaxation
-from concentrating before rounding; the short runtime ($1.20$~s) reflects
-early closure of the relative-change condition before concentration.
-At $\sigma{=}1.0$~px on AprilGrid, FW-E recovers successfully
-($\lambda_{\min}{=}0.220$, runtime~$1.62$~s), so the failure is specific to
-ChArUco at the highest tested noise level.
-Wall-clock time is $1.2$--$2.5$~s for FW-E at 300 iterations across all six
-standard configurations, dominated by block-extraction pre-processing.
+At $K{=}20$, FW-E produces well-conditioned selections in all six standard
+configurations, including ChArUco at $\sigma{=}1.0$~px
+($\lambda_{\min}{=}0.196$, held-out RMS $2.569$~px).
+Wall-clock time is $2.4$--$2.6$~s for FW-E at 300 iterations across all six
+configurations, dominated by block-extraction pre-processing
+(Table~\ref{tab:fw_convergence}).
 
 \paragraph{Distortion robustness.}
 To test whether method rankings hold under lens distortion, we generated twelve
@@ -2579,8 +2602,7 @@ comparisons, and rank stability visually.
 \caption{Distortion robustness: $\lambda_{\min}$ and held-out RMS vs.\ distortion
 level (standard / medium / high) at $\sigma{=}0.5$\,px, $K{=}20$.
 Left: AprilGrid; right: ChArUco.
-Rankings are stable across distortion levels; $\lambda_{\min}$ rises with distortion
-as additional lens-model parameters improve FIM conditioning.}
+Rankings are stable across distortion levels, and $\lambda_{\min}$ rises with distortion.}
 \label{fig:distortion_line}
 \end{figure*}
 
@@ -2599,7 +2621,7 @@ FW-E and Greedy-E bars grow with distortion; the FW-E / Greedy-E gap narrows.}
 \caption{Rank stability heatmap across all 18 distortion configurations
 (2 targets $\times$ 3 distortion levels $\times$ 3 noise levels).
 Rows: methods; columns: configurations; colour: rank ($1{=}$best, green;
-$9{=}$worst, red).
+$8{=}$worst, red).
 FW-E and Greedy-E hold ranks 1--2 on $\lambda_{\min}$ across all 18 configs.}
 \label{fig:distortion_rank_heatmap}
 \end{figure*}
@@ -2614,35 +2636,42 @@ Figures~\ref{fig:tab9_aprilgrid_medium_noiseless}--\ref{fig:tab14_charuco_medium
 The ${\approx}2.5\times$ FW-E/Random gap in $\lambda_{\min}$ is preserved across
 all noise levels.
 
-\paragraph{High distortion: FW-E leads noiseless; Greedy-E leads under noise.}
+\paragraph{High distortion: FW-E leads $\lambda_{\min}$; Greedy-E and FW-A lead held-out error.}
 Under high distortion at noiseless conditions, FW-E achieves the highest
 $\lambda_{\min}$ on both targets
 ($3.53\!\times\!10^{3}$ vs.\ Greedy-E $3.48\!\times\!10^{3}$ on AprilGrid;
 $3.34\!\times\!10^{3}$ vs.\ $3.31\!\times\!10^{3}$ on ChArUco,
 Tables~\ref{tab:aprilgrid_high_noiseless}--\ref{tab:charuco_high_sigma10};
 Figures~\ref{fig:tab15_aprilgrid_high_noiseless}--\ref{fig:tab20_charuco_high_sigma10}).
-Under noise ($\sigma{=}0.5$\,px), Greedy-E leads on AprilGrid
-($1.393$ vs.\ FW-E $0.348$), indicating that FW-E rounding becomes unreliable
-under high distortion combined with moderate noise.
-Greedy-E and A-optimal remain stable across all high-distortion configurations.
+FW-E also has the highest $\lambda_{\min}$ under noise, narrowly ahead of
+Greedy-E (AprilGrid: $1.413$ vs.\ $1.393$ at $\sigma{=}0.5$\,px and $0.354$
+vs.\ $0.349$ at $\sigma{=}1.0$\,px).
+This lead does not carry over to held-out error.
+On AprilGrid, Greedy-E has the lowest held-out RMS ($0.697$\,px at
+$\sigma{=}0.5$ and $1.391$\,px at $\sigma{=}1.0$, vs.\ $1.033$ and
+$2.059$\,px for FW-E); on ChArUco, FW-A has the lowest at both noise levels
+($0.822$ and $1.643$\,px).
+A-optimal is not uniformly robust here: on AprilGrid at $\sigma{=}1.0$\,px
+its held-out RMS ($3.163$\,px) is worse than random ($2.436$\,px).
 
 \paragraph{Session 1 real-world.}
 Table~\ref{tab:real_world} reports results across all eight methods on
 $N_{\rm cand}{=}56$ candidate frames from a Logitech webcam capture, with a
 fixed 20-frame held-out test set.
 FIM-based methods outperform geometric heuristics on held-out reprojection
-error, confirming the simulation findings at $\sigma{\approx}1$\,px
-.
+error, in line with the simulation findings at $\sigma{\approx}1$\,px.
 Greedy-E achieves the best held-out RMS ($0.752$\,px), closely followed by
 FW-E ($0.764$\,px); both achieve the highest $\lambda_{\min}$
 ($5.1\!\times\!10^{-3}$).
 Coverage is the worst ($1.044$\,px), a $39\%$ gap over Greedy-E.
 Random ($0.883$\,px) falls between these groups, consistent with the
 ChArUco pattern observed in simulation.
-D-optimal achieves the best $\log\det H$ ($35.8$) and second-best held-out
+D-optimal achieves the best $\log\det H$ ($35.8$) and the third-best held-out
 RMS ($0.792$\,px), slightly behind the E-optimal variants.
-Train-RMS spans a narrow band ($1.13$--$1.43$\,px) that does not reflect
-the wider variation in held-out accuracy, replicating the simulation
+Train-RMS ($0.128$--$0.422$\,px) does not track held-out accuracy:
+Coverage has the second-lowest train-RMS ($0.181$\,px) but the worst
+held-out RMS, while D-optimal has the highest train-RMS ($0.422$\,px) but
+the third-best held-out RMS. This replicates the simulation
 finding that reprojection error on the training set is an unreliable
 quality indicator (Section~\ref{subsec:fixed_backend}).
 
@@ -2665,8 +2694,8 @@ Figures~\ref{fig:tab21_ksweep_aprilgrid_noiseless}--\ref{fig:tab26_ksweep_charuc
 Focal/PP errors in pixels, distortion error unitless.
 Random: mean over 25 trials.}
 \label{tab:aprilgrid_noiseless}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2679,7 +2708,7 @@ D-optimal & $1721$ & $\mathbf{156}$ & $8.01\!\times\!10^{-4}$ & $0.011$ & $0.029
 Random (mean) & $892$ & $153$ & $1.53\!\times\!10^{-3}$ & $0.015$ & $0.034$ & $4.95\!\times\!10^{-4}$ & $0.014$ & $0.037$ \\
 Coverage & $761$ & $152$ & $1.73\!\times\!10^{-3}$ & $5.67\!\times\!10^{-3}$ & $0.031$ & $5.71\!\times\!10^{-4}$ & $0.014$ & $0.034$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -2697,8 +2726,8 @@ Coverage & $761$ & $152$ & $1.73\!\times\!10^{-3}$ & $5.67\!\times\!10^{-3}$ & $
 \caption{Matched ChArUco board ($13{\times}13$, 144\,pts, 46\,cm), near-noiseless ($\sigma{=}0.01$\,px). $N{=}720$, $K{=}20$.
 Focal/PP errors in pixels, distortion error unitless.}
 \label{tab:charuco_noiseless}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2711,7 +2740,7 @@ D-optimal & $1842$ & $\mathbf{156}$ & $8.04\!\times\!10^{-4}$ & $0.016$ & $0.027
 Random (mean) & $885$ & $153$ & $1.54\!\times\!10^{-3}$ & $0.014$ & $0.026$ & $3.42\!\times\!10^{-4}$ & $0.014$ & $0.030$ \\
 Coverage & $715$ & $151$ & $1.84\!\times\!10^{-3}$ & $0.022$ & $0.049$ & $7.13\!\times\!10^{-4}$ & $\mathbf{0.014}$ & $0.053$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -2766,8 +2795,8 @@ FW-D & AprilGrid         & 1.0  & 300 & 2.25 & $1.83\!\times\!10^{-1}$ & $2.734$
 \setlength{\tabcolsep}{4pt}
 \caption{Medium distortion ($k_1{=}{-}0.15$, $k_2{=}0.05$, $p_1{=}p_2{=}0.001$), AprilGrid, noiseless ($\sigma{\approx}0$\,px). $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless. Random: mean over 25 trials.}
 \label{tab:aprilgrid_medium_noiseless}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2780,7 +2809,7 @@ D-optimal & $1782$ & $\mathbf{158}$ & $7.76\!\times\!10^{-4}$ & $0.011$ & $8.94\
 Random (mean) & $937$ & $155$ & $1.46\!\times\!10^{-3}$ & $0.015$ & $0.034$ & $3.32\!\times\!10^{-4}$ & $0.014$ & $0.036$ \\
 Coverage & $777$ & $155$ & $1.68\!\times\!10^{-3}$ & $2.27\!\times\!10^{-3}$ & $0.011$ & $5.33\!\times\!10^{-4}$ & $\mathbf{0.014}$ & $0.017$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -2797,8 +2826,8 @@ Coverage & $777$ & $155$ & $1.68\!\times\!10^{-3}$ & $2.27\!\times\!10^{-3}$ & $
 \setlength{\tabcolsep}{4pt}
 \caption{Medium distortion ($k_1{=}{-}0.15$, $k_2{=}0.05$, $p_1{=}p_2{=}0.001$), Matched ChArUco, near-noiseless ($\sigma{=}0.01$\,px). $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless. Random: mean over 25 trials.}
 \label{tab:charuco_medium_noiseless}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2811,7 +2840,7 @@ D-optimal & $1674$ & $\mathbf{159}$ & $8.14\!\times\!10^{-4}$ & $5.82\!\times\!1
 Random (mean) & $947$ & $155$ & $1.44\!\times\!10^{-3}$ & $0.014$ & $0.027$ & $2.83\!\times\!10^{-4}$ & $0.014$ & $0.030$ \\
 Coverage & $732$ & $154$ & $1.78\!\times\!10^{-3}$ & $\mathbf{5.47\!\times\!10^{-3}}$ & $0.029$ & $7.62\!\times\!10^{-5}$ & $0.014$ & $0.032$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -2828,8 +2857,8 @@ Coverage & $732$ & $154$ & $1.78\!\times\!10^{-3}$ & $\mathbf{5.47\!\times\!10^{
 \setlength{\tabcolsep}{4pt}
 \caption{Medium distortion ($k_1{=}{-}0.15$, $k_2{=}0.05$, $p_1{=}p_2{=}0.001$), AprilGrid, $\sigma{=}0.5$\,px noise. $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless. Random: mean over 25 trials.}
 \label{tab:aprilgrid_medium_sigma05}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2842,7 +2871,7 @@ D-optimal & $0.715$ & $\mathbf{88.1}$ & $1.935$ & $0.572$ & $0.449$ & $7.18\!\ti
 Random (mean) & $0.377$ & $84.6$ & $3.624$ & $0.763$ & $1.702$ & $0.017$ & $0.695$ & $1.815$ \\
 Coverage & $0.313$ & $84.2$ & $4.168$ & $0.116$ & $0.593$ & $0.027$ & $\mathbf{0.692}$ & $0.861$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -2859,8 +2888,8 @@ Coverage & $0.313$ & $84.2$ & $4.168$ & $0.116$ & $0.593$ & $0.027$ & $\mathbf{0
 \setlength{\tabcolsep}{4pt}
 \caption{Medium distortion ($k_1{=}{-}0.15$, $k_2{=}0.05$, $p_1{=}p_2{=}0.001$), Matched ChArUco, $\sigma{=}0.5$\,px noise. $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless. Random: mean over 25 trials.}
 \label{tab:charuco_medium_sigma05}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2873,7 +2902,7 @@ D-optimal & $0.681$ & $\mathbf{88.7}$ & $2.014$ & $0.283$ & $0.839$ & $9.92\!\ti
 Random (mean) & $0.381$ & $84.8$ & $3.583$ & $0.700$ & $1.362$ & $0.014$ & $0.695$ & $1.527$ \\
 Coverage & $0.295$ & $83.3$ & $4.420$ & $0.279$ & $1.431$ & $3.76\!\times\!10^{-3}$ & $0.695$ & $1.597$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -2890,8 +2919,8 @@ Coverage & $0.295$ & $83.3$ & $4.420$ & $0.279$ & $1.431$ & $3.76\!\times\!10^{-
 \setlength{\tabcolsep}{4pt}
 \caption{Medium distortion ($k_1{=}{-}0.15$, $k_2{=}0.05$, $p_1{=}p_2{=}0.001$), AprilGrid, $\sigma{=}1.0$\,px noise. $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless. Random: mean over 25 trials.}
 \label{tab:aprilgrid_medium_sigma10}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2904,7 +2933,7 @@ D-optimal & $0.175$ & $\mathbf{75.6}$ & $7.847$ & $0.996$ & $1.267$ & $4.73\!\ti
 Random (mean) & $0.096$ & $72.2$ & $14.3$ & $1.526$ & $3.411$ & $0.033$ & $1.390$ & $3.636$ \\
 Coverage & $0.080$ & $71.7$ & $16.4$ & $0.226$ & $1.237$ & $0.055$ & $\mathbf{1.385}$ & $1.758$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -2921,8 +2950,8 @@ Coverage & $0.080$ & $71.7$ & $16.4$ & $0.226$ & $1.237$ & $0.055$ & $\mathbf{1.
 \setlength{\tabcolsep}{4pt}
 \caption{Medium distortion ($k_1{=}{-}0.15$, $k_2{=}0.05$, $p_1{=}p_2{=}0.001$), Matched ChArUco, $\sigma{=}1.0$\,px noise. $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless. Random: mean over 25 trials.}
 \label{tab:charuco_medium_sigma10}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2935,7 +2964,7 @@ D-optimal & $0.172$ & $\mathbf{76.2}$ & $8.008$ & $0.398$ & $1.554$ & $4.58\!\ti
 Random (mean) & $0.097$ & $72.3$ & $14.1$ & $1.408$ & $2.740$ & $0.029$ & $1.391$ & $3.070$ \\
 Coverage & $0.075$ & $70.8$ & $17.4$ & $0.570$ & $2.848$ & $7.43\!\times\!10^{-3}$ & $1.390$ & $3.182$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -2952,8 +2981,8 @@ Coverage & $0.075$ & $70.8$ & $17.4$ & $0.570$ & $2.848$ & $7.43\!\times\!10^{-3
 \setlength{\tabcolsep}{4pt}
 \caption{High distortion ($k_1{=}{-}0.35$, $k_2{=}0.15$, $p_1{=}p_2{=}0.002$), AprilGrid, noiseless ($\sigma{\approx}0$\,px). $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless. Random: mean over 25 trials.}
 \label{tab:aprilgrid_high_noiseless}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2966,7 +2995,7 @@ D-optimal & $2428$ & $163$ & $6.20\!\times\!10^{-4}$ & $\mathbf{3.27\!\times\!10
 Random (mean) & $1352$ & $159$ & $1.07\!\times\!10^{-3}$ & $0.013$ & $0.022$ & $1.42\!\times\!10^{-4}$ & $0.014$ & $0.024$ \\
 Coverage & $988$ & $157$ & $1.40\!\times\!10^{-3}$ & $4.93\!\times\!10^{-3}$ & $0.056$ & $1.18\!\times\!10^{-4}$ & $0.014$ & $0.056$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -2983,8 +3012,8 @@ Coverage & $988$ & $157$ & $1.40\!\times\!10^{-3}$ & $4.93\!\times\!10^{-3}$ & $
 \setlength{\tabcolsep}{4pt}
 \caption{High distortion ($k_1{=}{-}0.35$, $k_2{=}0.15$, $p_1{=}p_2{=}0.002$), Matched ChArUco, near-noiseless ($\sigma{=}0.01$\,px). $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless. Random: mean over 25 trials.}
 \label{tab:charuco_high_noiseless}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -2997,7 +3026,7 @@ D-optimal & $2624$ & $\mathbf{163}$ & $5.80\!\times\!10^{-4}$ & $4.52\!\times\!1
 Random (mean) & $1416$ & $159$ & $1.03\!\times\!10^{-3}$ & $0.012$ & $0.027$ & $1.94\!\times\!10^{-4}$ & $0.014$ & $0.029$ \\
 Coverage & $948$ & $158$ & $1.46\!\times\!10^{-3}$ & $0.016$ & $0.055$ & $1.00\!\times\!10^{-4}$ & $0.014$ & $0.054$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -3014,8 +3043,8 @@ Coverage & $948$ & $158$ & $1.46\!\times\!10^{-3}$ & $0.016$ & $0.055$ & $1.00\!
 \setlength{\tabcolsep}{4pt}
 \caption{High distortion ($k_1{=}{-}0.35$, $k_2{=}0.15$, $p_1{=}p_2{=}0.002$), AprilGrid, $\sigma{=}0.5$\,px noise. $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless. Random: mean over 25 trials.}
 \label{tab:aprilgrid_high_sigma05}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -3028,7 +3057,7 @@ D-optimal & $1.008$ & $\mathbf{92.7}$ & $1.527$ & $0.328$ & $0.672$ & $0.013$ & 
 Random (mean) & $0.543$ & $88.9$ & $2.669$ & $0.625$ & $1.080$ & $7.12\!\times\!10^{-3}$ & $0.697$ & $1.215$ \\
 Coverage & $0.398$ & $86.9$ & $3.479$ & $0.241$ & $2.820$ & $5.54\!\times\!10^{-3}$ & $0.710$ & $2.824$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -3045,8 +3074,8 @@ Coverage & $0.398$ & $86.9$ & $3.479$ & $0.241$ & $2.820$ & $5.54\!\times\!10^{-
 \setlength{\tabcolsep}{4pt}
 \caption{High distortion ($k_1{=}{-}0.35$, $k_2{=}0.15$, $p_1{=}p_2{=}0.002$), Matched ChArUco, $\sigma{=}0.5$\,px noise. $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless. Random: mean over 25 trials.}
 \label{tab:charuco_high_sigma05}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -3059,7 +3088,7 @@ D-optimal & $1.052$ & $\mathbf{92.8}$ & $1.449$ & $0.232$ & $1.229$ & $4.70\!\ti
 Random (mean) & $0.568$ & $89.0$ & $2.562$ & $0.620$ & $1.343$ & $9.69\!\times\!10^{-3}$ & $0.698$ & $1.431$ \\
 Coverage & $0.382$ & $87.6$ & $3.621$ & $0.784$ & $2.750$ & $5.02\!\times\!10^{-3}$ & $0.697$ & $2.666$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -3076,8 +3105,8 @@ Coverage & $0.382$ & $87.6$ & $3.621$ & $0.784$ & $2.750$ & $5.02\!\times\!10^{-
 \setlength{\tabcolsep}{4pt}
 \caption{High distortion ($k_1{=}{-}0.35$, $k_2{=}0.15$, $p_1{=}p_2{=}0.002$), AprilGrid, $\sigma{=}1.0$\,px noise. $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless. Random: mean over 25 trials.}
 \label{tab:aprilgrid_high_sigma10}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -3090,7 +3119,7 @@ D-optimal & $0.252$ & $\mathbf{80.2}$ & $6.110$ & $0.656$ & $1.333$ & $0.027$ & 
 Random (mean) & $0.137$ & $76.4$ & $10.6$ & $1.250$ & $2.166$ & $0.014$ & $1.394$ & $2.436$ \\
 Coverage & $0.101$ & $74.4$ & $13.7$ & $0.494$ & $5.647$ & $0.010$ & $1.419$ & $5.654$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]
@@ -3107,8 +3136,8 @@ Coverage & $0.101$ & $74.4$ & $13.7$ & $0.494$ & $5.647$ & $0.010$ & $1.419$ & $
 \setlength{\tabcolsep}{4pt}
 \caption{High distortion ($k_1{=}{-}0.35$, $k_2{=}0.15$, $p_1{=}p_2{=}0.002$), Matched ChArUco, $\sigma{=}1.0$\,px noise. $N{=}720$, $K{=}20$. Focal/PP errors in pixels, distortion error unitless. Random: mean over 25 trials.}
 \label{tab:charuco_high_sigma10}
-\scriptsize
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrrrrrrr}
+\footnotesize
+\begin{tabular}{lrrrrrrrr}
 \toprule
 Method & $\lambda_{\min}$ & $\log\det$ & $\mathrm{tr}(\Sigma)$ & $\epsilon_f$\,(px) & $\epsilon_{pp}$\,(px) & $\epsilon_d$ & Train-RMS & Held-out \\
 \midrule
@@ -3121,7 +3150,7 @@ D-optimal & $0.265$ & $\mathbf{80.3}$ & $5.766$ & $\mathbf{0.435}$ & $1.933$ & $
 Random (mean) & $0.144$ & $76.5$ & $10.2$ & $1.238$ & $2.679$ & $0.019$ & $1.396$ & $2.856$ \\
 Coverage & $0.097$ & $75.1$ & $14.3$ & $1.561$ & $5.478$ & $0.010$ & $1.395$ & $5.312$ \\
 \bottomrule
-\end{tabular}}
+\end{tabular}
 \end{table*}
 
 \begin{figure*}[t]

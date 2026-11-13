@@ -8,13 +8,6 @@
   year    = {2000}
 }
 
-@inproceedings{kalibr,
-  title     = {A target-based extrinsic calibration method for multiple heterogeneous sensor combinations},
-  author    = {Furgale, Paul and Rehder, Joern and Siegwart, Roland},
-  booktitle = {IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
-  year      = {2013}
-}
-
 @misc{opencv_calib,
   author       = {{OpenCV Development Team}},
   title        = {{OpenCV}: Camera Calibration},
@@ -23,10 +16,12 @@
 }
 
 @inproceedings{sturm1999generic,
-  title     = {A generic concept for camera calibration},
-  author    = {Sturm, Peter and Maybank, Stephen},
-  booktitle = {European Conference on Computer Vision (ECCV)},
-  year      = {1999}
+  title     = {On plane-based camera calibration: A general algorithm, singularities, applications},
+  author    = {Sturm, Peter F. and Maybank, Stephen J.},
+  booktitle = {IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {1432--1437},
+  year      = {1999},
+  doi       = {10.1109/CVPR.1999.786974}
 }
 
 @book{oed_book,
@@ -37,20 +32,21 @@
 }
 
 @inproceedings{active_calib_1,
-  title     = {Active calibration: Approach and implementation},
-  author    = {Olsen, Søren Ingvor},
-  booktitle = {British Machine Vision Conference (BMVC)},
-  year      = {1994}
+  title     = {Active calibration: Alternative strategy and analysis},
+  author    = {Basu, Anup},
+  booktitle = {IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year      = {1993}
 }
 
 @article{active_calib_2,
   title   = {Active calibration of cameras: Theory and implementation},
-  author  = {Martins, Helena Araújo and Batista, Jorge and Peixoto, Paulo},
+  author  = {Basu, Anup},
   journal = {IEEE Transactions on Systems, Man, and Cybernetics},
-  volume  = {35},
+  volume  = {25},
   number  = {2},
-  pages   = {194--209},
-  year    = {2005}
+  pages   = {256--265},
+  year    = {1995},
+  doi     = {10.1109/21.364838}
 }
 
 @article{krause2008near,
@@ -100,115 +96,219 @@
   year         = {2023}
 }
 
-@misc{maye2013self,
-  author = {{Maye et al.}},
-  title  = {Self-supervised calibration for robotic systems},
-  year   = {2013}
+@inproceedings{maye2013self,
+  title     = {Self-supervised calibration for robotic systems},
+  author    = {Maye, J{\'e}r{\^o}me and Furgale, Paul and Siegwart, Roland},
+  booktitle = {IEEE Intelligent Vehicles Symposium (IV)},
+  pages     = {473--480},
+  year      = {2013},
+  doi       = {10.1109/IVS.2013.6629513}
 }
 
-@misc{richardson2013aprilcal,
-  author = {Richardson, Andrew and Olson, Edwin},
-  title  = {{AprilCal}: Assisted and repeatable camera calibration},
-  year   = {2013}
+@inproceedings{richardson2013aprilcal,
+  title     = {{AprilCal}: Assisted and repeatable camera calibration},
+  author    = {Richardson, Andrew and Strom, Johannes and Olson, Edwin},
+  booktitle = {IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  pages     = {1814--1821},
+  year      = {2013},
+  doi       = {10.1109/IROS.2013.6696595}
 }
 
-@misc{peng2019calibration,
-  author = {{Peng et al.}},
-  title  = {Calibration Wizard: A guidance system for camera calibration based on modeling geometric and corner uncertainty},
-  year   = {2019}
+@inproceedings{peng2019calibration,
+  title     = {Calibration Wizard: A guidance system for camera calibration based on modelling geometric and corner uncertainty},
+  author    = {Peng, Songyou and Sturm, Peter},
+  booktitle = {IEEE/CVF International Conference on Computer Vision (ICCV)},
+  pages     = {1497--1505},
+  year      = {2019}
 }
 
-@misc{rojtberg2018efficient,
-  author = {{Rojtberg et al.}},
-  title  = {Efficient pose selection for interactive camera calibration},
-  year   = {2018}
+@inproceedings{rojtberg2018efficient,
+  title     = {Efficient pose selection for interactive camera calibration},
+  author    = {Rojtberg, Pavel and Kuijper, Arjan},
+  booktitle = {IEEE International Symposium on Mixed and Augmented Reality (ISMAR)},
+  pages     = {31--36},
+  year      = {2018},
+  doi       = {10.1109/ISMAR.2018.00026}
 }
 
-@misc{yang2023nbv,
-  author = {{Yang et al.}},
-  title  = {Next-best-view planning for robot eye-in-hand calibration},
-  year   = {2023}
+@inproceedings{yang2023nbv,
+  title     = {Next-best-view selection for robot eye-in-hand calibration},
+  author    = {Yang, Jun and Rebello, Jason and Waslander, Steven L.},
+  booktitle = {Conference on Robots and Vision (CRV)},
+  pages     = {161--168},
+  year      = {2023}
 }
 
 @misc{wang2025active,
-  author = {{Wang et al.}},
-  title  = {Active observability-aware trajectory optimization for calibration},
-  year   = {2025}
+  title         = {Observability-aware active calibration of multi-sensor extrinsics for ground robots via online trajectory optimization},
+  author        = {Wang, Jiang and Kang, Yaozhong and Fu, Linya and Nakadai, Kazuhiro and Kong, He},
+  howpublished  = {arXiv:2506.13420},
+  year          = {2025}
 }
 
-@misc{giamou2019certifiable,
-  author = {{Giamou et al.}},
-  title  = {Certifiably globally optimal extrinsic calibration from per-sensor egomotion},
-  year   = {2019}
+@article{giamou2019certifiable,
+  title   = {Certifiably globally optimal extrinsic calibration from per-sensor egomotion},
+  author  = {Giamou, Matthew and Ma, Ziye and Peretroukhin, Valentin and Kelly, Jonathan},
+  journal = {IEEE Robotics and Automation Letters},
+  volume  = {4},
+  number  = {2},
+  pages   = {367--374},
+  year    = {2019},
+  doi     = {10.1109/LRA.2018.2890444}
 }
 
-@misc{kaveti2023oasis,
-  author = {{Kaveti et al.}},
-  title  = {{OASIS}: Optimal arrangement of sensors for {SLAM}},
-  year   = {2023}
+@inproceedings{kaveti2023oasis,
+  title     = {{OASIS}: Optimal arrangements for sensing in {SLAM}},
+  author    = {Kaveti, Pushyami and Giamou, Matthew and Singh, Hanumant and Rosen, David M.},
+  booktitle = {IEEE International Conference on Robotics and Automation (ICRA)},
+  year      = {2024}
 }
 
-@misc{pandey2015mutual,
-  author = {{Pandey et al.}},
-  title  = {Automatic targetless extrinsic calibration of a {3D LiDAR} and camera by maximizing mutual information},
-  year   = {2015}
+@article{pandey2015mutual,
+  title   = {Automatic extrinsic calibration of vision and lidar by maximizing mutual information},
+  author  = {Pandey, Gaurav and McBride, James R. and Savarese, Silvio and Eustice, Ryan M.},
+  journal = {Journal of Field Robotics},
+  volume  = {32},
+  number  = {5},
+  pages   = {696--722},
+  year    = {2015},
+  doi     = {10.1002/rob.21542}
 }
 
-@misc{schneider2017regnet,
-  author = {{Schneider et al.}},
-  title  = {{RegNet}: Multimodal sensor registration using deep neural networks},
-  year   = {2017}
+@inproceedings{schneider2017regnet,
+  title     = {{RegNet}: Multimodal sensor registration using deep neural networks},
+  author    = {Schneider, Nick and Piewak, Florian and Stiller, Christoph and Franke, Uwe},
+  booktitle = {IEEE Intelligent Vehicles Symposium (IV)},
+  year      = {2017}
 }
 
-@misc{iyer2018calibnet,
-  author = {{Iyer et al.}},
-  title  = {{CalibNet}: Geometrically supervised extrinsic calibration using {3D} spatial transformer networks},
-  year   = {2018}
+@inproceedings{iyer2018calibnet,
+  title     = {{CalibNet}: Geometrically supervised extrinsic calibration using {3D} spatial transformer networks},
+  author    = {Iyer, Ganesh and Ram, R. Karnik and Murthy, J. Krishna and Krishna, K. Madhava},
+  booktitle = {IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  pages     = {1110--1117},
+  year      = {2018},
+  doi       = {10.1109/IROS.2018.8593693}
 }
 
-@misc{lv2021lccnet,
-  author = {{Lv et al.}},
-  title  = {{LCCNet}: {LiDAR} and camera self-calibration using cost volume network},
-  year   = {2021}
+@inproceedings{lv2021lccnet,
+  title     = {{LCCNet}: {LiDAR} and camera self-calibration using cost volume network},
+  author    = {Lv, Xudong and Wang, Boya and Dou, Ziwen and Ye, Dong and Wang, Shuo},
+  booktitle = {IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)},
+  pages     = {2894--2901},
+  year      = {2021},
+  doi       = {10.1109/CVPRW53098.2021.00324}
 }
 
 @misc{liao2023survey,
-  author = {{Liao et al.}},
-  title  = {A survey of learning-based calibration methods},
-  year   = {2023}
+  title        = {Deep learning for camera calibration and beyond: A survey},
+  author       = {Liao, Kang and Nie, Lang and Huang, Shujuan and Lin, Chunyu and Zhang, Jing and Zhao, Yao and Gabbouj, Moncef and Tao, Dacheng},
+  howpublished = {arXiv:2303.10559},
+  year         = {2023}
 }
 
 @misc{huang2025whatmatters,
-  author = {{Huang et al.}},
-  title  = {What matters in learning-based {LiDAR}-camera calibration},
-  year   = {2025}
+  title        = {What really matters for learning-based {LiDAR}-camera calibration},
+  author       = {Huang, Shujuan and Lin, Chunyu and Zhao, Yao},
+  howpublished = {arXiv:2501.16969},
+  year         = {2025}
 }
 
-@misc{schneider2017informative,
-  author = {{Schneider et al.}},
-  title  = {Informative segment selection for visual-inertial self-calibration},
-  year   = {2017}
+@inproceedings{schneider2017informative,
+  title     = {Visual-inertial self-calibration on informative motion segments},
+  author    = {Schneider, Thomas and Li, Mingyang and Burri, Michael and Nieto, Juan and Siegwart, Roland and Gilitschenski, Igor},
+  booktitle = {IEEE International Conference on Robotics and Automation (ICRA)},
+  pages     = {6487--6494},
+  year      = {2017}
 }
 
-@misc{schneider2019observability,
-  author = {{Schneider et al.}},
-  title  = {Observability-aware visual-inertial self-calibration},
-  year   = {2019}
+@article{schneider2019observability,
+  title   = {Observability-aware self-calibration of visual and inertial sensors for ego-motion estimation},
+  author  = {Schneider, Thomas and Li, Mingyang and Cadena, Cesar and Nieto, Juan and Siegwart, Roland},
+  journal = {IEEE Sensors Journal},
+  year    = {2019},
+  doi     = {10.1109/JSEN.2019.2893809}
 }
 
-@misc{yang2023online,
-  author = {{Yang et al.}},
-  title  = {Online visual-inertial self-calibration with observability analysis},
-  year   = {2023}
+@article{yang2023online,
+  title   = {Online self-calibration for visual-inertial navigation: Models, analysis, and degeneracy},
+  author  = {Yang, Yulin and Geneva, Patrick and Zuo, Xingxing and Huang, Guoquan},
+  journal = {IEEE Transactions on Robotics},
+  year    = {2023},
+  doi     = {10.1109/TRO.2023.3275878}
 }
 
 @article{dexheimer2022information,
-  author  = {Dexheimer, Eric and Peluse, Peter and Chen, Jing and Pritts, James and Kaess, Michael},
+  author  = {Dexheimer, Eric and Peluse, Patrick and Chen, Jianhui and Pritts, James and Kaess, Michael},
   title   = {Information-theoretic online multi-camera extrinsic calibration},
   journal = {IEEE Robotics and Automation Letters},
   volume  = {7},
   number  = {2},
   pages   = {4757--4764},
   year    = {2022},
-  doi     = {10.1109/LRA.2022.3152706}
+  doi     = {10.1109/LRA.2022.3145061}
+}
+
+@article{joshi2009sensor,
+  title   = {Sensor selection via convex optimization},
+  author  = {Joshi, Siddharth and Boyd, Stephen},
+  journal = {IEEE Transactions on Signal Processing},
+  volume  = {57},
+  number  = {2},
+  pages   = {451--462},
+  year    = {2009},
+  doi     = {10.1109/TSP.2008.2007095}
+}
+
+@inproceedings{bian2017guarantees,
+  title     = {Guarantees for greedy maximization of non-submodular functions with applications},
+  author    = {Bian, Andrew An and Buhmann, Joachim M. and Krause, Andreas and Tschiatschek, Sebastian},
+  booktitle = {International Conference on Machine Learning (ICML)},
+  series    = {PMLR},
+  volume    = {70},
+  pages     = {498--507},
+  year      = {2017}
+}
+
+@inproceedings{allenzhu2017near,
+  title     = {Near-optimal design of experiments via regret minimization},
+  author    = {Allen-Zhu, Zeyuan and Li, Yuanzhi and Singh, Aarti and Wang, Yining},
+  booktitle = {International Conference on Machine Learning (ICML)},
+  series    = {PMLR},
+  volume    = {70},
+  pages     = {126--135},
+  year      = {2017}
+}
+
+@article{khosoussi2019reliable,
+  title   = {Reliable graphs for {SLAM}},
+  author  = {Khosoussi, Kasra and Giamou, Matthew and Sukhatme, Gaurav S. and Huang, Shoudong and Dissanayake, Gamini and How, Jonathan P.},
+  journal = {The International Journal of Robotics Research},
+  volume  = {38},
+  number  = {2--3},
+  pages   = {260--298},
+  year    = {2019},
+  doi     = {10.1177/0278364918823086}
+}
+
+@article{civril2009selecting,
+  title   = {On selecting a maximum volume sub-matrix of a matrix and related problems},
+  author  = {{\c{C}}ivril, Ali and Magdon-Ismail, Malik},
+  journal = {Theoretical Computer Science},
+  volume  = {410},
+  number  = {47--49},
+  pages   = {4801--4811},
+  year    = {2009},
+  doi     = {10.1016/j.tcs.2009.06.018}
+}
+
+@article{tsai1989new,
+  title   = {A new technique for fully autonomous and efficient {3D} robotics hand/eye calibration},
+  author  = {Tsai, Roger Y. and Lenz, Reimar K.},
+  journal = {IEEE Transactions on Robotics and Automation},
+  volume  = {5},
+  number  = {3},
+  pages   = {345--358},
+  year    = {1989},
+  doi     = {10.1109/70.34770}
 }
